@@ -8,6 +8,6 @@ public class LogvisualizationApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(LogvisualizationApplication.class, args);
-        //±â¿ì¿µ¾¾
+        //ê¸°ìš°ì˜
     }
 }
