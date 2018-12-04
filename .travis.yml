@@ -11,7 +11,7 @@ cache:
   - '$HOME/.m2/repository'
   - '$HOME/.gradle'
 
-script: "./gradlew build"
+script: "./gradlew clean build"
 
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
