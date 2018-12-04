@@ -1,8 +1,12 @@
 package com.asearch.logvisualization.service;
 
+import com.asearch.logvisualization.dto.AlarmKeywordDto;
 import org.springframework.stereotype.Service;
 
-@Service
-public class AlarmService {
-    //TEST
+import java.io.IOException;
+
+
+public interface AlarmService {
+
+    boolean registerAlarmKeyword(AlarmKeywordDto keyword) throws IOException;
 }
