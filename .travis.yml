@@ -11,10 +11,7 @@ cache:
   - '$HOME/.m2/repository'
   - '$HOME/.gradle'
 
-script: "./gradlew clean build"
+script: "./gradlew build"
 
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
-#  email:
-#    recipients:
-#    - xxx@gmail.com
