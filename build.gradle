@@ -42,9 +42,15 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     testImplementation('org.springframework.kafka:spring-kafka-test')
 
-    //swagger
+    // swagger
     compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
     compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.9.2'
+    // elasticsearch
+    compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:6.5.1'
+    compile('org.elasticsearch:elasticsearch:6.5.0')
+    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
+//    implementation('org.elasticsearch.client:elasticsearch-rest-client')
+//    implementation('org.elasticsearch:elasticsearch')
 }
 
 dependencyManagement {
