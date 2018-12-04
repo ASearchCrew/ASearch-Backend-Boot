@@ -21,29 +21,15 @@ import java.util.Map;
 public class ConnectionServiceTest {
 
     @Autowired
-    ElasticSearchConfiguration configuration;
-
-    @Autowired
     RestHighLevelClient client;
 
-    private final String ELASTIC_INDEX = "classes";
-    private final String ELASTIC_TYPE = "class";
+    private final String ELASTIC_INDEX = "filebeat-6.5.0-2018.11.22";
+    private final String ELASTIC_TYPE = "doc";
 
     @Test
     public void 엘라스틱서치_GET() throws IOException {
-//        String url = ELASTIC_INDEX + "/" + ELASTIC_TYPE;
-//        Weather weather = new Weather();
-//        weather.setCity("Seoul");
-//        weather.setTemperature(10.2);
-//        weather.setSeason("Winter");
-//
-//        Map<String, Object> result = client.callElasticApi("POST", url, weather, null);
-//        System.out.println(result.get("resultCode"));
-//        System.out.println(result.get("resultBody"));
 
-
-//        GetRequest getRequest = new GetRequest("classes");
-        GetRequest getRequest = new GetRequest("filebeat-6.5.0-2018.11.22", "doc", "Gq-XOmcBOxmke417TvSE");
+        GetRequest getRequest = new GetRequest(ELASTIC_INDEX, ELASTIC_TYPE, "Gq-XOmcBOxmke417TvSE");
         String[] includes = new String[]{"message", "@timestamp"};
         String[] excludes = Strings.EMPTY_ARRAY;
         FetchSourceContext fetchSourceContext =
@@ -54,9 +40,7 @@ public class ConnectionServiceTest {
 
         Map<String, Object> resultMap = getResponse.getSource();
 
-        System.out.println(resultMap.getClass().toString());
         System.out.println(resultMap.toString());
-//        return resultMap.toString();
     }
 
 }
