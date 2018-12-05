@@ -1,6 +1,5 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.config.ElasticSearchConfiguration;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.RequestOptions;
