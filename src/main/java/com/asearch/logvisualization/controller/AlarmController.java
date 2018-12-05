@@ -48,4 +48,16 @@ public class AlarmController {
                 new ResponseEntity(HttpStatus.OK) :
                 new ResponseEntity(HttpStatus.CONFLICT);
     }
+
+    @ApiOperation(value = "탐지 키워드 리스트 조회", notes = "탐지 키워드 리스트를 조회 한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success")
+    })
+    @CrossOrigin
+    @GetMapping("/keyword/list")
+    public ResponseEntity getKeywords() throws IOException {
+        return alarmService.getKeywordList() ?
+                new ResponseEntity(HttpStatus.OK) :
+                new ResponseEntity(HttpStatus.CONFLICT);
+    }
 }

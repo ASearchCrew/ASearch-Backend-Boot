@@ -11,4 +11,6 @@ public interface AlarmService {
     boolean registerAlarmKeyword(AlarmKeywordDto keyword) throws IOException;
 
     boolean removeKeyword(AlarmKeywordDto keyword) throws IOException;
+
+    boolean getKeywordList();
 }

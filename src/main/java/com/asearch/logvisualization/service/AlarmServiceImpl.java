@@ -73,6 +73,13 @@ public class AlarmServiceImpl implements AlarmService {
         }
     }
 
+    @Override
+    public boolean getKeywordList() {
+
+        return false;
+    }
+
+
     private boolean makeKeyword(RestHighLevelClient client, String keyword) {
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("keyword", keyword);
