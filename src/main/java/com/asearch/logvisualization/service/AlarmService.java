@@ -4,6 +4,7 @@ import com.asearch.logvisualization.dto.AlarmKeywordDto;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 
 public interface AlarmService {
@@ -12,5 +13,5 @@ public interface AlarmService {
 
     boolean removeKeyword(AlarmKeywordDto keyword) throws IOException;
 
-    boolean getKeywordList();
+    List<String> getKeywordList() throws IOException;
 }

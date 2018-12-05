@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.ws.Response;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @AllArgsConstructor
@@ -55,9 +57,7 @@ public class AlarmController {
     })
     @CrossOrigin
     @GetMapping("/keyword/list")
-    public ResponseEntity getKeywords() throws IOException {
-        return alarmService.getKeywordList() ?
-                new ResponseEntity(HttpStatus.OK) :
-                new ResponseEntity(HttpStatus.CONFLICT);
+    public ResponseEntity<List<String>> getKeywords() throws IOException {
+        return new ResponseEntity<>(alarmService.getKeywordList(), HttpStatus.OK);
     }
 }
