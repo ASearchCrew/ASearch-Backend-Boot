@@ -4,6 +4,8 @@ import com.asearch.logvisualization.dto.AlarmKeywordDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -42,6 +44,32 @@ public class AlarmServiceImpl implements AlarmService {
             for (SearchHit searchHit : response.getHits().getHits())
                 if (keyword.getKeyword().equals(searchHit.getSourceAsMap().get("keyword").toString())) flag = true;
             return !flag && makeKeyword(client, keyword.getKeyword());
+        }
+    }
+
+    @Override
+    public boolean removeKeyword(AlarmKeywordDto keyword) throws IOException {
+        boolean flag = false;
+        String documentId = null;
+        SearchRequest searchRequest = new SearchRequest("mytest");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchQuery("keyword", keyword.getKeyword()));
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+        if (response.getHits().getHits().length == 0) return false;
+        else {
+            for (SearchHit searchHit : response.getHits().getHits())
+                if (keyword.getKeyword().equals(searchHit.getSourceAsMap().get("keyword").toString())) {
+                    flag = true;
+                    documentId = searchHit.getId();
+                }
+            if (flag) {
+                //같은게 있을시
+                DeleteRequest deleteRequest = new DeleteRequest("mytest", "keyword", documentId);
+                DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+                return true;
+            } else return false;
         }
     }
 
