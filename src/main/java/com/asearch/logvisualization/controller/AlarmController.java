@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.xml.ws.Response;
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @AllArgsConstructor
@@ -47,5 +49,15 @@ public class AlarmController {
         return alarmService.removeKeyword(keyword) ?
                 new ResponseEntity(HttpStatus.OK) :
                 new ResponseEntity(HttpStatus.CONFLICT);
+    }
+
+    @ApiOperation(value = "탐지 키워드 리스트 조회", notes = "탐지 키워드 리스트를 조회 한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success")
+    })
+    @CrossOrigin
+    @GetMapping("/keyword/list")
+    public ResponseEntity<List<String>> getKeywords() throws IOException {
+        return new ResponseEntity<>(alarmService.getKeywordList(), HttpStatus.OK);
     }
 }
