@@ -19,8 +19,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @AllArgsConstructor
 @Service
@@ -72,6 +71,22 @@ public class AlarmServiceImpl implements AlarmService {
             } else return false;
         }
     }
+
+    @Override
+    public List<String> getKeywordList() throws IOException {
+        SearchRequest searchRequest = new SearchRequest("mytest");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.size(1000);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+        List<String> results = new ArrayList<>();
+        for (SearchHit searchHit : response.getHits().getHits())
+            results.add(searchHit.getSourceAsMap().get("keyword").toString());
+        return results;
+    }
+
 
     private boolean makeKeyword(RestHighLevelClient client, String keyword) {
         Map<String, Object> jsonMap = new HashMap<>();
