@@ -7,5 +7,5 @@ public interface LogService {
 
     List<String> getRawLogs(int count) throws IOException;
 
-    List<String> searchLog(String word);
+    List<String> searchLog(String word) throws IOException;
 }

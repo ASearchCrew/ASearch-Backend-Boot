@@ -58,12 +58,29 @@ public class LogServiceImpl implements LogService {
             log.info(hit.getSourceAsString());
             list.add(hit.getSourceAsString());
         }
-
         return list;
     }
 
     @Override
-    public List<String> searchLog(String word) {
-        return null;
+    public List<String> searchLog(String word) throws IOException {
+        SearchRequest searchRequest = new SearchRequest();
+
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchQuery("message", word));
+
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+        log.info(Arrays.toString(response.getHits().getHits()));
+        log.info(response.getHits().getHits().getClass().toString());
+
+        ArrayList<String> list = new ArrayList<>();
+        SearchHit[] results = response.getHits().getHits();
+        for (SearchHit hit : results) {
+            log.info(hit.getSourceAsString());
+            list.add(hit.getSourceAsString());
+        }
+        return list;
     }
 }
