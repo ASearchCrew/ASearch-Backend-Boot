@@ -61,4 +61,9 @@ public class LogServiceImpl implements LogService {
 
         return list;
     }
+
+    @Override
+    public List<String> searchLog(String word) {
+        return null;
+    }
 }
