@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.controller;
 
+import com.asearch.logvisualization.service.ManagementService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/v1/management", produces = "application/json")
 public class ManagementController {
 
+    private ManagementService managementService;
+
     @ApiOperation(value = "Filebeat Configuration 변경", notes = "Fillbeat Conf를 변경한다. // Todo 수정 필요.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
@@ -25,6 +28,7 @@ public class ManagementController {
     @PutMapping("/filebeat/conf")
     public String modifyFilebeatConfiguration() {
 
+        managementService.modifyFilebeatConf();
         return "우영";
     }
 }
