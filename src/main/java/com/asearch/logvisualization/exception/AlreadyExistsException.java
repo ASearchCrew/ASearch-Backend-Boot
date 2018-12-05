@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.CONFLICT)
 public class AlreadyExistsException extends BaseException {
-    public AlreadyExistsException(int statusCode, String message) {
-        super(statusCode, message);
+    public AlreadyExistsException(String message) {
+        super(HttpStatus.CONFLICT.value(), message);
     }
 }
