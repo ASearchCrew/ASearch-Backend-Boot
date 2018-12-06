@@ -7,4 +7,8 @@ import com.asearch.logvisualization.service.MoniteringService;
 @Service("MoniteringService")
 public class MoniteringServiceImpl implements MoniteringService{
 
+    @Override
+    public void getServerStatus() {
+
+    }
 }
