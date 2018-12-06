@@ -18,7 +18,7 @@ notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
 
 before_deploy:
-  - zip -r spring-gradle *
+  - zip -r logvisualization-asearch *
   - mkdir -p deploy
   - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
 
