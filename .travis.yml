@@ -14,24 +14,38 @@ cache:
 
 script: "./gradlew clean build"
 
-notifications:
-  slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
-
 before_deploy:
   - zip -r logvisualization-asearch *
   - mkdir -p deploy
   - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
 
 deploy:
-- provider: s3
-  access_key_id: $AWS_ACCESS_KEY
-  secret_access_key: $AWS_SECRET_KEY
-  bucket: key-s3
-  region: ap-northeast-2
-  skip_cleanup: true
-  acl: public_read
-  local_dir: deploy
-  wait-until-deployed: true
-  on:
-    repo: ASearchCrew/ASearch-Backend-Boot
-    branch: develop
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    bucket: key-s3
+    region: ap-northeast-2
+    skip_cleanup: true
+    acl: public_read
+    local_dir: deploy
+    wait-until-deployed: true
+    on:
+      repo: ASearchCrew/ASearch-Backend-Boot
+      branch: develop
+
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    bucket: key-s3
+    key: deploy/logvisualization-asearch.zip
+    bundle_type: zip
+    application: logvisualization # 웹 콘솔에서 등록한 CodeDeploy 어플리케이션
+    deployment_group: asearch-deployer-group
+    region: ap-northeast-2
+    wait-until-deployed: true
+    on:
+      repo: ASearchCrew/ASearch-Backend-Boot
+      branch: develop
+
+notifications:
+  slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
