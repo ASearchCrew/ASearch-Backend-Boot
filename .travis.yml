@@ -31,7 +31,7 @@ deploy:
     wait-until-deployed: true
     on:
       repo: ASearchCrew/ASearch-Backend-Boot
-      branch: develop
+      branch: master
 
   - provider: codedeploy
     access_key_id: $AWS_ACCESS_KEY
@@ -45,7 +45,7 @@ deploy:
     wait-until-deployed: true
     on:
       repo: ASearchCrew/ASearch-Backend-Boot
-      branch: develop
+      branch: master
 
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
