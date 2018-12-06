@@ -42,7 +42,6 @@ public class LogController {
     @CrossOrigin
     @GetMapping("/search")
     public ResponseEntity<List<String>> searchLog(@RequestParam("word") String word) throws IOException {
-        log.info(word);
         return new ResponseEntity<>(logService.searchLog(word), HttpStatus.OK);
     }
 }

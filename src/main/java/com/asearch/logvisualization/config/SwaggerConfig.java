@@ -27,10 +27,10 @@ public class SwaggerConfig {
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("com.wooyoung.logvisualization")
+                .groupName("com.asearch.logvisualization")
                 .apiInfo(apiInfo())
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.wooyung.logvisualization.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.asearch.logvisualization.controller"))
                 .paths(PathSelectors.ant("/**"))
                 .build()
                 .useDefaultResponseMessages(false)
