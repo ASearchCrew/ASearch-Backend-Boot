@@ -16,8 +16,8 @@ script: "./gradlew clean build"
 
 before_deploy:
   - zip -r logvisualization-asearch *
-#  - mkdir -p deploy
-#  - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
+  - mkdir -p deploy
+  - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
 
 deploy:
   - provider: s3
@@ -36,9 +36,9 @@ deploy:
     access_key_id: $AWS_ACCESS_KEY
     secret_access_key: $AWS_SECRET_KEY
     bucket: key-s3
-    key: logvisualization-asearch.zip
+    key: deploy/logvisualization-asearch.zip
     bundle_type: zip
-    application: asearch-deployer
+    application: logvisualization
     deployment_group: asearch-deployer-group
     region: ap-northeast-2
     wait-until-deployed: true
