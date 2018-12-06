@@ -17,6 +17,11 @@ script: "./gradlew clean build"
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
 
+before_deploy:
+  - zip -r spring-gradle *
+  - mkdir -p deploy
+  - mv spring-gradle.zip deploy/logvisualization-asearch.zip
+
 deploy:
 - provider: s3
   access_key_id: $AWS_ACCESS_KEY
@@ -25,6 +30,7 @@ deploy:
   region: ap-northeast-2
   skip_cleanup: true
   acl: public_read
+  local_dir: deploy
   wait-until-deployed: true
   on:
     repo: ASearchCrew/ASearch-Backend-Boot
