@@ -42,6 +42,8 @@ deploy:
     deployment_group: logvisualization-group
     region: ap-northeast-2
     wait-until-deployed: true
+    after_failure:
+      - cat MSBuild_*.failure.txt
     on:
       repo: ASearchCrew/ASearch-Backend-Boot
       branch: master
