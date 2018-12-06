@@ -20,7 +20,7 @@ notifications:
 before_deploy:
   - zip -r spring-gradle *
   - mkdir -p deploy
-  - mv spring-gradle.zip deploy/logvisualization-asearch.zip
+  - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
 
 deploy:
 - provider: s3
