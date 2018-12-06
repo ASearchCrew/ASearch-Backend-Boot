@@ -4,7 +4,7 @@ files:
 - source:  /
   destination: /home/ec2-user/springboot/asearch-deploy/
 
-hooks:
-  AfterInstall:
-  - location: execute-deploy.sh
-    timeout: 180
+#hooks:
+#  AfterInstall:
+#  - location: execute-deploy.sh
+#    timeout: 180
