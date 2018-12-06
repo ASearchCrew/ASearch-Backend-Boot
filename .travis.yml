@@ -39,7 +39,7 @@ deploy:
     key: deploy/logvisualization-asearch.zip
     bundle_type: zip
     application: logvisualization
-    deployment_group: asearch-deployer-group
+    deployment_group: logvisualization-group
     region: ap-northeast-2
     wait-until-deployed: true
     on:
