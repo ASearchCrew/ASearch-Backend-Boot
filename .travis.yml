@@ -39,7 +39,7 @@ deploy:
     bucket: key-s3
     key: deploy/logvisualization-asearch.zip
     bundle_type: zip
-    application: logvisualization # 웹 콘솔에서 등록한 CodeDeploy 어플리케이션
+    application: asearch-deployer # 웹 콘솔에서 등록한 CodeDeploy 어플리케이션
     deployment_group: asearch-deployer-group
     region: ap-northeast-2
     wait-until-deployed: true
