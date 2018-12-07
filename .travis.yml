@@ -32,19 +32,19 @@ deploy:
       repo: ASearchCrew/ASearch-Backend-Boot
       branch: master
 
-#  - provider: codedeploy
-#    access_key_id: $AWS_ACCESS_KEYY
-#    secret_access_key: $AWS_SECRET_KEYY
-#    bucket: asearch-deploy
-#    key: deploy/logvisualization-asearch.zip
-#    bundle_type: zip
-#    application: logvisualization-asearch
-#    deployment_group: logvisualization-asearch-group
-#    region: ap-northeast-2
-#    wait-until-deployed: true
-#    on:
-#      repo: ASearchCrew/ASearch-Backend-Boot
-#      branch: master
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEYY
+    secret_access_key: $AWS_SECRET_KEYY
+    bucket: asearch-deploy
+    key: deploy/logvisualization-asearch.zip
+    bundle_type: zip
+    application: logvisualization-asearch
+    deployment_group: logvisualization-asearch-group
+    region: ap-northeast-2
+    wait-until-deployed: true
+    on:
+      repo: ASearchCrew/ASearch-Backend-Boot
+      branch: master
 
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
