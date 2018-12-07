@@ -38,12 +38,10 @@ deploy:
     bucket: key-s3
     key: deploy/logvisualization-asearch.zip
     bundle_type: zip
-    application: logvisualization
-    deployment_group: logvisualization-group
+    application: logvisualization-asearch
+    deployment_group: logvisualization-asearch-group
     region: ap-northeast-2
     wait-until-deployed: true
-    after_failure:
-      - cat MSBuild_*.failure.txt
     on:
       repo: ASearchCrew/ASearch-Backend-Boot
       branch: master
