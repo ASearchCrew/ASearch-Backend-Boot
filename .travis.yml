@@ -33,8 +33,8 @@ deploy:
       branch: master
 
   - provider: codedeploy
-    access_key_id: $AWS_ACCESS_KEY
-    secret_access_key: $AWS_SECRET_KEY
+    access_key_id: $AWS_ACCESS_KEYY
+    secret_access_key: $AWS_SECRET_KEYY
     bucket: asearch-deploy
     key: deploy/logvisualization-asearch.zip
     bundle_type: zip
