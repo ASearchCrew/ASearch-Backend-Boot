@@ -19,32 +19,32 @@ before_deploy:
   - mkdir -p deploy
   - mv logvisualization-asearch.zip deploy/logvisualization-asearch.zip
 
-#deploy:
-#  - provider: s3
-#    access_key_id: $AWS_ACCESS_KEYY
-#    secret_access_key: $AWS_SECRET_KEYY
-#    bucket: key-s3
-#    region: ap-northeast-2
-#    skip_cleanup: true
-#    acl: public_read
-#    wait-until-deployed: true
-#    on:
-#      repo: ASearchCrew/ASearch-Backend-Boot
-#      branch: master
+deploy:
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEYY
+    secret_access_key: $AWS_SECRET_KEYY
+    bucket: asearch-deploy
+    region: ap-northeast-2
+    skip_cleanup: true
+    acl: public_read
+    wait-until-deployed: true
+    on:
+      repo: ASearchCrew/ASearch-Backend-Boot
+      branch: master
 
-#  - provider: codedeploy
-#    access_key_id: $AWS_ACCESS_KEY
-#    secret_access_key: $AWS_SECRET_KEY
-#    bucket: key-s3
-#    key: deploy/logvisualization-asearch.zip
-#    bundle_type: zip
-#    application: logvisualization-asearch
-#    deployment_group: logvisualization-asearch-group
-#    region: ap-northeast-2
-#    wait-until-deployed: true
-#    on:
-#      repo: ASearchCrew/ASearch-Backend-Boot
-#      branch: master
+  - provider: codedeploy
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_key: $AWS_SECRET_KEY
+    bucket: asearch-deploy
+    key: deploy/logvisualization-asearch.zip
+    bundle_type: zip
+    application: logvisualization-asearch
+    deployment_group: logvisualization-asearch-group
+    region: ap-northeast-2
+    wait-until-deployed: true
+    on:
+      repo: ASearchCrew/ASearch-Backend-Boot
+      branch: master
 
 notifications:
   slack: asearchworkspace:4V3B2DvvLytHrgDaeSNGLxWY
