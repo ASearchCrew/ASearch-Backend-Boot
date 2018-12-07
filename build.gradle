@@ -51,4 +51,6 @@ dependencies {
     compileOnly("org.springframework.boot:spring-boot-configuration-processor")
 //    implementation('org.elasticsearch.client:elasticsearch-rest-client')
 //    implementation('org.elasticsearch:elasticsearch')
+    //json - fcm?
+    compile group: 'org.json', name: 'json', version: '20180813'
 }
