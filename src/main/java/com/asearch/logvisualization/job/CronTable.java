@@ -12,8 +12,8 @@ public class CronTable {
 
     
 
-    @Scheduled(cron = "*/30 * * * * *")
-    public String aJob() throws Exception {
+//    @Scheduled(cron = "*/30 * * * * *")
+    public String aJob() {
 
         log.info("My Cron Test");
 //        log.info(profileService.getBasicInfo());
