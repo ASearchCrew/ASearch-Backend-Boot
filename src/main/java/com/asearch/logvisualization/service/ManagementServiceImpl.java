@@ -9,4 +9,9 @@ public class ManagementServiceImpl implements ManagementService {
     public String modifyFilebeatConf() {
         return null;
     }
+
+    @Override
+    public void registerServerToMonitor() {
+
+    }
 }

@@ -6,6 +6,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,4 +33,17 @@ public class ManagementController {
         managementService.modifyFilebeatConf();
         return "우영";
     }
+    @ApiOperation(value = "모니터링 할 서버 등록", notes = "모니터링 할 서버를 등록한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 409, message = "Already Exist")
+    })
+    @CrossOrigin
+    @PutMapping("/server") // monitoring/server
+    public ResponseEntity registerServerToMonitor() {
+
+        managementService.registerServerToMonitor();
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
 }
