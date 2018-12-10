@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.controller;
 
+import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.service.ManagementService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -8,10 +9,7 @@ import io.swagger.annotations.ApiResponses;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Api(description = "관리", tags = {"management"})
 @AllArgsConstructor
@@ -39,8 +37,8 @@ public class ManagementController {
             @ApiResponse(code = 409, message = "Already Exist")
     })
     @CrossOrigin
-    @PutMapping("/server") // monitoring/server
-    public ResponseEntity registerServerToMonitor() {
+    @PostMapping("/server") // monitoring/server
+    public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerDto serverInfo) {
 
         managementService.registerServerToMonitor();
         return new ResponseEntity(HttpStatus.OK);
