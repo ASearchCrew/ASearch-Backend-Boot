@@ -3,6 +3,7 @@ package com.asearch.logvisualization.service;
 import com.asearch.logvisualization.dto.AlarmKeywordDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import netscape.javascript.JSObject;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -16,10 +17,14 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+
+import static com.asearch.logvisualization.util.Constant.KEYWORD_INDEX;
+import static com.asearch.logvisualization.util.Constant.KEYWORD_TYPE;
 
 @AllArgsConstructor
 @Service
@@ -32,18 +37,21 @@ public class AlarmServiceImpl implements AlarmService {
     public boolean registerAlarmKeyword(AlarmKeywordDto keyword) throws IOException {
 
         boolean flag = false;
-        SearchRequest searchRequest = new SearchRequest("mytest");
+        SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchQuery("keyword", keyword.getKeyword()));
+        searchSourceBuilder.query(QueryBuilders.matchQuery("host_ip", keyword.getKeyword()));
         searchRequest.source(searchSourceBuilder);
         SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+        log.info(Arrays.toString(response.getHits().getHits()));
 
-        if (response.getHits().getHits().length == 0) return makeKeyword(client, keyword.getKeyword());
-        else {
-            for (SearchHit searchHit : response.getHits().getHits())
-                if (keyword.getKeyword().equals(searchHit.getSourceAsMap().get("keyword").toString())) flag = true;
-            return !flag && makeKeyword(client, keyword.getKeyword());
-        }
+        return false;
+//        if (response.getHits().getHits().length == 0) return makeKeyword(client, keyword.getKeyword());
+//        else {
+//            for (SearchHit searchHit : response.getHits().getHits())
+//                if (keyword.getKeyword().equals(searchHit.getSourceAsMap().get("keyword").toString())) flag = true;
+//            return !flag && makeKeyword(client, keyword.getKeyword());
+//        }
     }
 
     @Override
@@ -74,7 +82,7 @@ public class AlarmServiceImpl implements AlarmService {
 
     @Override
     public List<String> getKeywordList() throws IOException {
-        SearchRequest searchRequest = new SearchRequest("mytest");
+        SearchRequest searchRequest = new SearchRequest("keyword");
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         searchSourceBuilder.size(1000);
@@ -82,11 +90,23 @@ public class AlarmServiceImpl implements AlarmService {
         SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
         List<String> results = new ArrayList<>();
-        for (SearchHit searchHit : response.getHits().getHits())
+        for (SearchHit searchHit : response.getHits().getHits()) {
             results.add(searchHit.getSourceAsMap().get("keyword").toString());
+            JSONObject jsonObject = new JSONObject(searchHit.getSourceAsString());
+            log.info(jsonObject.toString());
+            log.info(searchHit.getSourceAsString());
+        }
         return results;
     }
 
+    private SearchRequest buildSearchRequest(String index, String type) {
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices(index);
+        searchRequest.types(type);
+
+        return searchRequest;
+    }
 
     private boolean makeKeyword(RestHighLevelClient client, String keyword) {
         Map<String, Object> jsonMap = new HashMap<>();

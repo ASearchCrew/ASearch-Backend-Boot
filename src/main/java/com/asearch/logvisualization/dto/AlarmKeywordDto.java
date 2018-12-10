@@ -13,5 +13,4 @@ public class AlarmKeywordDto {
 
     private String keyword;
     private String hostIp;
-    private Date lastOccurrenceTime;
 }
