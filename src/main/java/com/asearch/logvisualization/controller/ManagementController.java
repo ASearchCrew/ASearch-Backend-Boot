@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @Api(description = "관리", tags = {"management"})
 @AllArgsConstructor
 @RestController
@@ -38,9 +40,8 @@ public class ManagementController {
     })
     @CrossOrigin
     @PostMapping("/server") // monitoring/server
-    public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerDto serverInfo) {
-
-        managementService.registerServerToMonitor();
+    public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerDto serverInfo) throws IOException {
+        managementService.registerServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
 
