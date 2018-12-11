@@ -30,10 +30,9 @@ public class ManagementController {
     })
     @CrossOrigin
     @PutMapping("/filebeat/conf")
-    public String modifyFilebeatConfiguration() {
-
-        managementService.modifyFilebeatConf();
-        return "우영";
+    public ResponseEntity modifyFilebeatConfiguration(@RequestParam(value = "path", required = true) String path) throws Exception{
+        //managementService.modifyFilebeatConf(path);
+        return new ResponseEntity(HttpStatus.OK);
     }
     @ApiOperation(value = "모니터링 할 서버 등록", notes = "모니터링 할 서버를 등록한다.")
     @ApiResponses(value = {

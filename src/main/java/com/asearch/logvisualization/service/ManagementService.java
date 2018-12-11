@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 
 public interface ManagementService {
 
-    String modifyFilebeatConf();
+    void modifyFilebeatConf(String path) throws Exception;
 
 
     void registerServerToMonitor(RegisterServerDto serverInfo) throws IOException;
