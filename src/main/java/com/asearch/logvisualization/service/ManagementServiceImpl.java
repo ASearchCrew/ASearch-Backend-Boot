@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -37,12 +39,15 @@ import java.util.Map;
 public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
-    
-    //private String[] serverList = {"ip-172-31-31-55"};
-    
+        
     @Override
-    public String modifyFilebeatConf() {
-        return null;
+    public void modifyFilebeatConf(String path) throws Exception{
+    	int PORT = 8080;
+    	Socket socket = new Socket("192.168.157.128", PORT);
+    	
+    	OutputStream stream = socket.getOutputStream();
+		stream.write(path.getBytes());
+		socket.close();
     }
 
     @Override
@@ -71,15 +76,13 @@ public class ManagementServiceImpl implements ManagementService {
     public List<HashMap<String, Object>> getLogCountList() throws Exception{
     	SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
     	String index = "filebeat-6.5.0-"+simpleDateFormat.format(new Date());
-    	//String index = "filebeat-6.5.0-2018.12.11";
-    	String[] serverList = {"ip-172-31-31-55", "ip-172-31-31-56", "ip-172-31-31-57", "ip-172-31-31-58"};
     	List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-    	
-    	for(int i = 0; i < serverList.length; i++) {
-    		String serverName = serverList[i];
+    	List<Object> serverList = getServerList();
+    	for(int i = 0; i < serverList.size(); i++) {
+    		HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
     		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     		searchSourceBuilder.size(1);
-    		searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", serverList[i]));
+    		searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
     		searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
 
     		SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
@@ -90,7 +93,7 @@ public class ManagementServiceImpl implements ManagementService {
     			HashMap<String, Object> putData = new HashMap<String, Object>();
     			putData.put("timestamp", "Exception");
     			putData.put("lasttime", -1);
-    			putData.put("server", serverName);
+    			putData.put("server", convert.get("host_ip"));
 
     			result.add(putData);
 
@@ -148,7 +151,7 @@ public class ManagementServiceImpl implements ManagementService {
     				HashMap<String, Object> putData = new HashMap<String, Object>();
     				putData.put("timestamp", logTime);
     				putData.put("lasttime", resultHour);
-    				putData.put("server", serverName);
+    				putData.put("server", convert.get("host_ip"));
 
     				result.add(putData);
     			});
@@ -164,16 +167,18 @@ public class ManagementServiceImpl implements ManagementService {
 	@Override
 	public List<HashMap<String, Object>> getDateCountList() throws Exception {
 		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-		String[] serverList = {"ip-172-31-31-55", "ip-172-31-31-56", "ip-172-31-31-57", "ip-172-31-31-58"};
 		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
 		Calendar calendar = Calendar.getInstance();
 		Date date = new Date();
 		
-		for(int i = 0; i < serverList.length; i++) {
+		List<Object> serverList = getServerList();
+		
+		for(int i = 0; i < serverList.size(); i++) {
+			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
 			HashMap<String, Object> answer = new HashMap<String, Object>();
 			List<HashMap<String, Object>> tempList = new ArrayList<HashMap<String, Object>>();
 			
-			answer.put("server", serverList[i]);
+			answer.put("server", convert.get("host_ip"));
 			
 			for(int j = 0; j < 10; j++) {
 				calendar.setTime(date);
@@ -181,7 +186,7 @@ public class ManagementServiceImpl implements ManagementService {
 				String index = "filebeat-6.5.0-"+simpleDateFormat.format(calendar.getTime());
 				
 				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", serverList[i]));
+				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
 				
 				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 				
