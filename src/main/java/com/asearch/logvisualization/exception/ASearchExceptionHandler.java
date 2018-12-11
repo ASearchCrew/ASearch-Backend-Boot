@@ -1,7 +1,6 @@
 package com.asearch.logvisualization.exception;
 
 import com.asearch.logvisualization.dto.ErrorModel;
-import javafx.util.Builder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
