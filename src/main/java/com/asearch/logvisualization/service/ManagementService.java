@@ -17,4 +17,7 @@ public interface ManagementService {
 
 
     List<HashMap<String, Object>> getLogCountList() throws Exception;
+
+
+	List<HashMap<String, Object>> getDateCountList() throws Exception;
 }

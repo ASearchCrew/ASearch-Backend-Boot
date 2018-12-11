@@ -58,4 +58,16 @@ public class ManagementController {
     	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getLogCountList(), HttpStatus.OK);
         return rs;
     }
+    
+    @ApiOperation(value = "날짜별 로그갯수 출력", notes = "날짜별 로그갯수 출력.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/datecount")
+    public ResponseEntity<List<HashMap<String, Object>>> getDateCountList() throws Exception{
+    	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getDateCountList(), HttpStatus.OK);
+        return rs;
+    }
 }

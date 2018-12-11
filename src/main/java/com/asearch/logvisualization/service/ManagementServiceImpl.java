@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -158,5 +159,47 @@ public class ManagementServiceImpl implements ManagementService {
     	}
 
     	return result;
+	}
+
+	@Override
+	public List<HashMap<String, Object>> getDateCountList() throws Exception {
+		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+		String[] serverList = {"ip-172-31-31-55", "ip-172-31-31-56", "ip-172-31-31-57", "ip-172-31-31-58"};
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		Calendar calendar = Calendar.getInstance();
+		Date date = new Date();
+		
+		for(int i = 0; i < serverList.length; i++) {
+			HashMap<String, Object> answer = new HashMap<String, Object>();
+			List<HashMap<String, Object>> tempList = new ArrayList<HashMap<String, Object>>();
+			
+			answer.put("server", serverList[i]);
+			
+			for(int j = 0; j < 10; j++) {
+				calendar.setTime(date);
+				calendar.add(Calendar.DATE, -j);
+				String index = "filebeat-6.5.0-"+simpleDateFormat.format(calendar.getTime());
+				
+				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", serverList[i]));
+				
+				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+				
+				try {
+					long count = client.search(searchRequest, RequestOptions.DEFAULT).getHits().getTotalHits();
+					HashMap<String, Object> temp = new HashMap<String, Object>();
+					
+					temp.put("date", simpleDateFormat.format(calendar.getTime()));
+					temp.put("count", count);
+					tempList.add(temp);
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+			}
+			answer.put("chartDatas", tempList);
+			result.add(answer);
+		}
+		
+		return result;
 	}
 }
