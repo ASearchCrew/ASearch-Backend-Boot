@@ -40,7 +40,7 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
 
         SearchResponse response = logDao.getLogs(searchRequest, buildSearchSourceRequest(), direction, time, search);
-
+        log.info("총 Count = " + response.getHits().getTotalHits());
         //From
 //        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544502133329").to(String.valueOf(calendar.getTimeInMillis())));
         searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544501113329").to("1544502133329"));
@@ -48,7 +48,6 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
         ArrayList<LogModel> logList = new ArrayList<>();
         SearchHit[] results = response.getHits().getHits();
         for (SearchHit hit : results) {
-            
             logList.add(new LogModel(hit.getId(), hit.getSourceAsMap().get("@timestamp").toString(), hit.getSourceAsMap().get("message").toString()));
         }
         return logList;

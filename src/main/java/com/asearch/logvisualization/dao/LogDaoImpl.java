@@ -39,8 +39,8 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
          */
         int tempCur;
 //        tempCur = count * 5;
-        searchSourceBuilder.from(0);
-        searchSourceBuilder.size(500);
+//        searchSourceBuilder.from(0);
+        searchSourceBuilder.size(10000);
 
         String[] includeFields = new String[] {"@timestamp", "input", "message"};
         String[] excludeFields = new String[] {};
@@ -61,12 +61,12 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
             log.info(Long.parseLong(time) + 10000 + "  ----");
             searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(time).to(String.valueOf(Long.parseLong(time) + 10000)));
             searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
-
+            searchSourceBuilder.from(1);
         } else if (direction.equals("up")) {
 
             searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(time).to(String.valueOf(Long.parseLong(time) - 10000)));
             searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-
+            searchSourceBuilder.from(1);
         } else if (direction.equals("center")) {
 
             Calendar calendar = Calendar.getInstance();
@@ -74,6 +74,7 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
 //            System.out.println("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
             searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(calendar.getTimeInMillis() - 300000)).to(calendar.getTimeInMillis()));
             searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+            searchSourceBuilder.from(0);
         }
 
         searchRequest.source(searchSourceBuilder);
