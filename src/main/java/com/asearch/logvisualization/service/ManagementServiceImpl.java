@@ -155,7 +155,6 @@ public class ManagementServiceImpl implements ManagementService {
     		//만약 오늘날짜 로그가 존재하지 않는다면, 이전날짜의 마지막 로그를 불러와서 보여준다.
     		//이전날짜 로그마저 존재하지 않는다면 error처리로 보낸다.
     		//이전날짜 시간처리도 생각해야한다.
-    		
     	}
 
     	return result;
