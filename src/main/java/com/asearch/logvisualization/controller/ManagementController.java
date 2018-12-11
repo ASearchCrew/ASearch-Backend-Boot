@@ -78,8 +78,8 @@ public class ManagementController {
     })
     @CrossOrigin
     @GetMapping("/server") // monitoring/server
-    public ResponseEntity<List<HashMap<String, Object>>> getServerList() throws IOException {
-        ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getServerList(), HttpStatus.OK);
+    public ResponseEntity<List<Object>> getServerList() throws IOException {
+        ResponseEntity<List<Object>> rs = new ResponseEntity<List<Object>>(managementService.getServerList(), HttpStatus.OK);
         return rs;
     }
 }
