@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 
 @Api(description = "관리", tags = {"management"})
 @AllArgsConstructor
@@ -44,5 +46,16 @@ public class ManagementController {
         managementService.registerServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
-
+    
+    @ApiOperation(value = "서버별 로그갯수 출력", notes = "서버별로 로그갯수 출력.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/logcount")
+    public ResponseEntity<List<HashMap<String, Object>>> getLogCountList() throws Exception{
+    	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getLogCountList(), HttpStatus.OK);
+        return rs;
+    }
 }
