@@ -70,4 +70,16 @@ public class ManagementController {
     	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getDateCountList(), HttpStatus.OK);
         return rs;
     }
+    
+    @ApiOperation(value = "모니터링 할 서버 조회", notes = "모니터링 할 서버를 조회한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/server") // monitoring/server
+    public ResponseEntity<List<HashMap<String, Object>>> getServerList() throws IOException {
+        ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getServerList(), HttpStatus.OK);
+        return rs;
+    }
 }

@@ -202,4 +202,28 @@ public class ManagementServiceImpl implements ManagementService {
 		
 		return result;
 	}
+
+	@Override
+	public List<HashMap<String, Object>> getServerList() throws IOException {
+		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+		SearchRequest searchRequest = new SearchRequest("server");
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+        response.getHits().forEach(item -> {
+        	List<HashMap<String, Object>> tempList = new ArrayList<HashMap<String, Object>>();
+        	HashMap<String, Object> innerTemp = new HashMap<String, Object>();
+        	HashMap<String, Object> outerTemp = new HashMap<String, Object>();
+        	innerTemp.put("host_ip", item.getSourceAsMap().get("host_ip").toString());
+        	innerTemp.put("host_name", item.getSourceAsMap().get("host_name").toString());
+        	tempList.add(innerTemp);
+        	outerTemp.put("server", tempList);
+        	
+        	result.add(outerTemp);
+		});
+        
+		return result;
+	}
 }
