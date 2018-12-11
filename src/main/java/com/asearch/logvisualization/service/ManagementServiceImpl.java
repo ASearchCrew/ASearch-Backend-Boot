@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -41,8 +43,13 @@ public class ManagementServiceImpl implements ManagementService {
     //private String[] serverList = {"ip-172-31-31-55"};
     
     @Override
-    public String modifyFilebeatConf() {
-        return null;
+    public void modifyFilebeatConf(String path) throws Exception{
+    	int PORT = 8080;
+    	Socket socket = new Socket("192.168.157.128", PORT);
+    	
+    	OutputStream stream = socket.getOutputStream();
+		stream.write(path.getBytes());
+		socket.close();
     }
 
     @Override
