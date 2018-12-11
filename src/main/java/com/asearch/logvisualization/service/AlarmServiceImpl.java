@@ -80,7 +80,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     @Override
     public List<KeywordListModel> getKeywordList() throws IOException {
-        SearchRequest searchRequest = buildSearchRequest("keyword", "doc");
+        SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
         SearchHit[] searchHits = alarmDao.getKeywordList(searchRequest, buildSearchSourceRequest(), "all", 1000);
         List<KeywordListModel> keywordListModels = new ArrayList<>();
         Stream<SearchHit> hitStream = Arrays.stream(searchHits);

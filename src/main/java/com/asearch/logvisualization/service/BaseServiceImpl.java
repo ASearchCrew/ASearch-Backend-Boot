@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.service;
 
+import io.micrometer.core.lang.Nullable;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -13,10 +14,11 @@ import java.util.Map;
 public class BaseServiceImpl implements BaseService {
 
     @Override
-    public SearchRequest buildSearchRequest(String index, String type) {
+    public SearchRequest buildSearchRequest(String index, @Nullable String type) {
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices(index);
-        searchRequest.types(type);
+        if (!(type == null))
+            searchRequest.types(type);
         return searchRequest;
     }
 

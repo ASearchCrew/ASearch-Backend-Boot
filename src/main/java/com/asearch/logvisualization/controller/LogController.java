@@ -1,6 +1,8 @@
 package com.asearch.logvisualization.controller;
 
+import com.asearch.logvisualization.dto.LogModel;
 import com.asearch.logvisualization.service.LogService;
+import io.micrometer.core.lang.Nullable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -30,8 +32,11 @@ public class LogController {
     })
     @CrossOrigin
     @GetMapping
-    public ResponseEntity<List<String>> getDocuments(@RequestParam("offset") Integer count) throws Exception {
-        return new ResponseEntity<>(logService.getRawLogs(count), HttpStatus.OK);
+    public ResponseEntity<List<LogModel>> getDocuments(@RequestParam("direction") String direction,
+                                                       @RequestParam("time") String time,
+                                                       @Nullable @RequestParam("search") String search) throws Exception {
+        log.info("IN");
+        return new ResponseEntity<>(logService.getRawLogs(direction, time, search), HttpStatus.OK);
     }
 
     @ApiOperation(value = "로그 검색", notes = "로그를 검색한다.")

@@ -1,5 +1,7 @@
 package com.asearch.logvisualization.service;
 
+import com.asearch.logvisualization.dao.LogDao;
+import com.asearch.logvisualization.dto.LogModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.search.SearchRequest;
@@ -14,51 +16,40 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static com.asearch.logvisualization.util.Constant.FILEBEAT_LOG;
 
 @AllArgsConstructor
 @Service
 @Slf4j
-public class LogServiceImpl implements LogService {
+public class LogServiceImpl extends BaseServiceImpl implements LogService {
 
     private RestHighLevelClient client;
+    private LogDao logDao;
 
     @Override
-    public List<String> getRawLogs(int count) throws IOException {
-        SearchRequest searchRequest = new SearchRequest("filebeat-6.5.0-2018.11.26");
+    public List<LogModel> getRawLogs(String direction, String time, String search) throws IOException {
+
+        SearchRequest searchRequest = buildSearchRequest(FILEBEAT_LOG, null);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        System.out.println("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
 
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("2018-11-23T05:13:41.342Z").to(new Date()));
 
-        int tempCur;
-        tempCur = count * 5;
-        searchSourceBuilder.from(tempCur);
-        searchSourceBuilder.size(5);
+        SearchResponse response = logDao.getLogs(searchRequest, buildSearchSourceRequest(), direction, time, search);
 
-        String[] includeFields = new String[] {"@timestamp", "input", "message"};
-        String[] excludeFields = new String[] {};
-        searchSourceBuilder.fetchSource(includeFields, excludeFields);
+        //From
+//        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544502133329").to(String.valueOf(calendar.getTimeInMillis())));
+        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544501113329").to("1544502133329"));
 
-        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-
-        searchRequest.source(searchSourceBuilder);
-
-        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-
-        log.info(response.toString());
-        log.info(Arrays.toString(response.getHits().getHits()));
-        log.info(response.getHits().getHits().getClass().toString());
-        ArrayList<String> list = new ArrayList<>();
+        ArrayList<LogModel> logList = new ArrayList<>();
         SearchHit[] results = response.getHits().getHits();
-        for (SearchHit hit : results) {
-            log.info(hit.getSourceAsString());
-            list.add(hit.getSourceAsString());
-        }
-        return list;
+        for (SearchHit hit : results)
+            logList.add(new LogModel(hit.getId(), hit.getSourceAsMap().get("@timestamp").toString(), hit.getSourceAsMap().get("message").toString()));
+        return logList;
     }
 
     @Override
