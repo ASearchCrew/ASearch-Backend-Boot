@@ -32,18 +32,11 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
     public List<LogModel> getRawLogs(String direction, String time, String search) throws IOException {
 
         SearchRequest searchRequest = buildSearchRequest(FILEBEAT_LOG, null);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        System.out.println("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
-
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-
         SearchResponse response = logDao.getLogs(searchRequest, buildSearchSourceRequest(), direction, time, search);
         log.info("총 Count = " + response.getHits().getTotalHits());
         //From
 //        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544502133329").to(String.valueOf(calendar.getTimeInMillis())));
-        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544501113329").to("1544502133329"));
+//        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544501113329").to("1544502133329"));
 
         ArrayList<LogModel> logList = new ArrayList<>();
         SearchHit[] results = response.getHits().getHits();

@@ -40,11 +40,12 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
         int tempCur;
 //        tempCur = count * 5;
 //        searchSourceBuilder.from(0);
-        searchSourceBuilder.size(10000);
+        searchSourceBuilder.size(10);
 
         String[] includeFields = new String[] {"@timestamp", "input", "message"};
         String[] excludeFields = new String[] {};
         searchSourceBuilder.fetchSource(includeFields, excludeFields);
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
 
         String changedTime = null;
 
@@ -52,9 +53,9 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
 //&search=null
 
         //TODO search 이건 전체 검색어로 해야 한다.
-        if (search != null) {
-            searchSourceBuilder.query(QueryBuilders.termQuery("message", search));
-        }
+//        if (search != null) {
+//            searchSourceBuilder.query(QueryBuilders.termQuery("message", search));
+//        }
 
 
         if (direction.equals("down")) {
@@ -63,17 +64,15 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
             searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
             searchSourceBuilder.from(1);
         } else if (direction.equals("up")) {
-
-            searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(time).to(String.valueOf(Long.parseLong(time) - 10000)));
-            searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+            searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(Long.parseLong(time) - 10000)).to(time));
+            searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
             searchSourceBuilder.from(1);
         } else if (direction.equals("center")) {
-
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Date());
-//            System.out.println("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
+            log.info("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
             searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(calendar.getTimeInMillis() - 300000)).to(calendar.getTimeInMillis()));
-            searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+            searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
             searchSourceBuilder.from(0);
         }
 
