@@ -43,18 +43,17 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
         SearchHit[] searchHits = alarmDao.getExistedKeyword(searchRequest, buildSearchSourceRequest(), new String[]{"keyword", "host_ip"},
                 new String[]{keyword.getKeyword(), keyword.getHostIp()});
-        if (searchHits.length == 1) {
-            log.info("AAAAA");
-            throw new AlreadyExistsException("Already exist");
-        }
-        else {
-            Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("keyword", keyword.getKeyword());
-            jsonMap.put("host_ip", keyword.getHostIp());
-            IndexRequest indexRequest = buildIndexRequest(KEYWORD_INDEX, KEYWORD_TYPE, jsonMap);
-            IndexResponse indexResponse = alarmDao.indexNewKeyword(indexRequest);
-            if (!indexResponse.getResult().toString().equals("CREATED")) throw new InternalServerErrorException("Not created");
-        }
+
+        for (SearchHit searchHit : searchHits)
+            if (searchHit.getSourceAsMap().get("keyword").equals(keyword.getKeyword()))
+                throw new AlreadyExistsException("Already Exist");
+
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("keyword", keyword.getKeyword());
+        jsonMap.put("host_ip", keyword.getHostIp());
+        IndexRequest indexRequest = buildIndexRequest(KEYWORD_INDEX, KEYWORD_TYPE, jsonMap);
+        IndexResponse indexResponse = alarmDao.indexNewKeyword(indexRequest);
+        if (!indexResponse.getResult().toString().equals("CREATED")) throw new InternalServerErrorException("Not created");
     }
 
     //TODO length가 1일때만 지우기.
