@@ -1,5 +1,7 @@
 package com.asearch.logvisualization.dao;
 
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -20,4 +22,7 @@ public interface AlarmDao {
 
 
     SearchHit[] getKeywordList(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String where, int size) throws IOException;
+
+
+    DeleteResponse removeKeywordDocument(DeleteRequest deleteRequest) throws IOException;
 }

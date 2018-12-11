@@ -12,7 +12,7 @@ public interface AlarmService {
 
     void registerAlarmKeyword(AlarmKeywordDto keyword) throws IOException;
 
-    boolean removeKeyword(AlarmKeywordDto keyword) throws IOException;
+    void removeKeyword(AlarmKeywordDto keyword) throws IOException;
 
     List<KeywordListModel> getKeywordList() throws IOException;
 }

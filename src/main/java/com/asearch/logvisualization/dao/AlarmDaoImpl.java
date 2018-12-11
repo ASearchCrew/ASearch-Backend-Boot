@@ -1,6 +1,8 @@
 package com.asearch.logvisualization.dao;
 
 import com.asearch.logvisualization.service.BaseServiceImpl;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -38,5 +40,11 @@ public class AlarmDaoImpl extends BaseDaoImpl implements AlarmDao {
         searchSourceBuilder.size(1000);
         searchRequest.source(searchSourceBuilder);
         return client.search(searchRequest, RequestOptions.DEFAULT).getHits().getHits();
+    }
+
+
+    @Override
+    public DeleteResponse removeKeywordDocument(DeleteRequest deleteRequest) throws IOException {
+        return client.delete(deleteRequest, RequestOptions.DEFAULT);
     }
 }

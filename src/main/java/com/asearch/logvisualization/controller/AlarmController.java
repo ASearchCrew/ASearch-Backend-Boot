@@ -41,14 +41,13 @@ public class AlarmController {
     @ApiOperation(value = "탐지 키워드 삭제", notes = "등록되어 있는 키워드를 삭제한다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 409, message = "COnflict")
+            @ApiResponse(code = 404, message = "No data")
     })
     @CrossOrigin
     @DeleteMapping("/keyword")
     public ResponseEntity removeAlarmKeyword(@RequestBody AlarmKeywordDto keyword) throws IOException {
-        return alarmService.removeKeyword(keyword) ?
-                new ResponseEntity(HttpStatus.OK) :
-                new ResponseEntity(HttpStatus.CONFLICT);
+        alarmService.removeKeyword(keyword);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @ApiOperation(value = "탐지 키워드 리스트 조회", notes = "탐지 키워드 리스트를 조회 한다.")
