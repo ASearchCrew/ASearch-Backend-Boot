@@ -47,8 +47,10 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
 
         ArrayList<LogModel> logList = new ArrayList<>();
         SearchHit[] results = response.getHits().getHits();
-        for (SearchHit hit : results)
+        for (SearchHit hit : results) {
+            
             logList.add(new LogModel(hit.getId(), hit.getSourceAsMap().get("@timestamp").toString(), hit.getSourceAsMap().get("message").toString()));
+        }
         return logList;
     }
 
