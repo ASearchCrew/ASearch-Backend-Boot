@@ -1,6 +1,7 @@
 package com.asearch.logvisualization.controller;
 
 import com.asearch.logvisualization.dto.AlarmKeywordDto;
+import com.asearch.logvisualization.dto.KeywordListModel;
 import com.asearch.logvisualization.service.AlarmService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -33,9 +34,8 @@ public class AlarmController {
     @CrossOrigin
     @PostMapping("/keyword")
     public ResponseEntity registerAlarmKeyword(@RequestBody AlarmKeywordDto keyword) throws IOException {
-        return alarmService.registerAlarmKeyword(keyword) ?
-                new ResponseEntity(HttpStatus.CREATED) :
-                new ResponseEntity(HttpStatus.CONFLICT);
+        alarmService.registerAlarmKeyword(keyword);
+        return new ResponseEntity(HttpStatus.CREATED);
     }
 
     @ApiOperation(value = "탐지 키워드 삭제", notes = "등록되어 있는 키워드를 삭제한다.")
@@ -57,7 +57,7 @@ public class AlarmController {
     })
     @CrossOrigin
     @GetMapping("/keyword/list")
-    public ResponseEntity<List<String>> getKeywords() throws IOException {
+    public ResponseEntity<List<KeywordListModel>> getKeywords() throws IOException {
         return new ResponseEntity<>(alarmService.getKeywordList(), HttpStatus.OK);
     }
 }

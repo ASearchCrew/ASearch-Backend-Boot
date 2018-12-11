@@ -2,7 +2,7 @@ package com.asearch.logvisualization.exception;
 
 public class BaseException extends RuntimeException {
 
-//    private int statusCode;
+    private int statusCode;
 
     public BaseException(int statusCode) {
         this(statusCode, null);
@@ -14,12 +14,12 @@ public class BaseException extends RuntimeException {
 
     public BaseException(int statusCode, String message, Throwable cause) {
         super(message, cause);
-//        this.statusCode = statusCode;
+        this.statusCode = statusCode;
     }
 
-//    public int getStatusCode() {
-//        return statusCode;
-//    }
+    public int getStatusCode() {
+        return statusCode;
+    }
 
 }
 

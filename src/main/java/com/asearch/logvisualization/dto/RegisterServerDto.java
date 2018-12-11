@@ -4,13 +4,11 @@ import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Date;
-
 @Data
 @ToString
 @Slf4j
-public class AlarmKeywordDto {
+public class RegisterServerDto {
 
-    private String keyword;
     private String hostIp;
+    private String hostName;
 }
