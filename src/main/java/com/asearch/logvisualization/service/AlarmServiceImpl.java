@@ -35,7 +35,6 @@ import static com.asearch.logvisualization.util.Constant.KEYWORD_TYPE;
 @Slf4j
 public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
-    private RestHighLevelClient client;
     private AlarmDaoImpl alarmDao;
 
     @Override
