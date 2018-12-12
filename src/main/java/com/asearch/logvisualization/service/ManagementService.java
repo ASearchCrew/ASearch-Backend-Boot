@@ -24,6 +24,4 @@ public interface ManagementService {
 
 	List<Object> getServerList() throws IOException;
 
-
-	void modifyFilebeatConf(String path) throws Exception;
 }

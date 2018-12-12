@@ -40,7 +40,7 @@ public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
         
-    @Override
+    /*@Override
     public void modifyFilebeatConf(String path) throws Exception{
     	int PORT = 8080;
     	Socket socket = new Socket("192.168.157.128", PORT);
@@ -48,7 +48,7 @@ public class ManagementServiceImpl implements ManagementService {
     	OutputStream stream = socket.getOutputStream();
 		stream.write(path.getBytes());
 		socket.close();
-    }
+    }*/
 
     @Override
     public void registerServerToMonitor(RegisterServerDto serverInfo) throws IOException {
@@ -151,7 +151,8 @@ public class ManagementServiceImpl implements ManagementService {
     				HashMap<String, Object> putData = new HashMap<String, Object>();
     				putData.put("timestamp", logTime);
     				putData.put("lasttime", resultHour);
-    				putData.put("server", convert.get("host_ip"));
+    				putData.put("host_ip", convert.get("host_ip"));
+    				putData.put("host_name", convert.get("host_name"));
 
     				result.add(putData);
     			});

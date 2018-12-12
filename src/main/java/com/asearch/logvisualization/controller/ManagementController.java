@@ -52,7 +52,7 @@ public class ManagementController {
             @ApiResponse(code = 404, message = "Not Found")
     })
     @CrossOrigin
-    @GetMapping("/logcount")
+    @GetMapping("/servertime")
     public ResponseEntity<List<HashMap<String, Object>>> getLogCountList() throws Exception{
     	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getLogCountList(), HttpStatus.OK);
         return rs;
@@ -76,7 +76,7 @@ public class ManagementController {
             @ApiResponse(code = 404, message = "Not Found")
     })
     @CrossOrigin
-    @GetMapping("/server") // monitoring/server
+    @GetMapping("/serverlist") // monitoring/server
     public ResponseEntity<List<Object>> getServerList() throws IOException {
         ResponseEntity<List<Object>> rs = new ResponseEntity<List<Object>>(managementService.getServerList(), HttpStatus.OK);
         return rs;
