@@ -82,7 +82,7 @@ public class ManagementServiceImpl implements ManagementService {
     		HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
     		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     		searchSourceBuilder.size(1);
-    		searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
+    		searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_ip")));
     		searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
 
     		SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
@@ -186,7 +186,7 @@ public class ManagementServiceImpl implements ManagementService {
 				String index = "filebeat-6.5.0-"+simpleDateFormat.format(calendar.getTime());
 				
 				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
+				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_ip")));
 				
 				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 				
