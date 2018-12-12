@@ -31,7 +31,7 @@ public class ManagementController {
     @CrossOrigin
     @PutMapping("/filebeat/conf")
     public ResponseEntity modifyFilebeatConfiguration(@RequestParam(value = "path", required = true) String path) throws Exception{
-        //managementService.modifyFilebeatConf(path);
+        managementService.modifyFilebeatConf(path);
         return new ResponseEntity(HttpStatus.OK);
     }
     @ApiOperation(value = "모니터링 할 서버 등록", notes = "모니터링 할 서버를 등록한다.")
@@ -79,6 +79,18 @@ public class ManagementController {
     @GetMapping("/serverlist") // monitoring/server
     public ResponseEntity<List<Object>> getServerList() throws IOException {
         ResponseEntity<List<Object>> rs = new ResponseEntity<List<Object>>(managementService.getServerList(), HttpStatus.OK);
+        return rs;
+    }
+    
+    @ApiOperation(value = "키워드별 로그갯수 출력", notes = "키워드별 로그갯수 출력.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/datecount")
+    public ResponseEntity<List<HashMap<String, Object>>> getKeywordCountList() throws Exception{
+    	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getKeywordCountList(), HttpStatus.OK);
         return rs;
     }
 }

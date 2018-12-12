@@ -39,16 +39,16 @@ import java.util.Map;
 public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
-        
-    /*@Override
+    
+    @Override
     public void modifyFilebeatConf(String path) throws Exception{
     	int PORT = 8080;
-    	Socket socket = new Socket("192.168.157.128", PORT);
+    	Socket socket = new Socket("192.168.157.128", 8080);
     	
     	OutputStream stream = socket.getOutputStream();
 		stream.write(path.getBytes());
 		socket.close();
-    }*/
+    }
 
     @Override
     public void registerServerToMonitor(RegisterServerDto serverInfo) throws IOException {
@@ -227,5 +227,11 @@ public class ManagementServiceImpl implements ManagementService {
 		});
         
 		return result;
+	}
+
+	@Override
+	public List<HashMap<String, Object>> getKeywordCountList() throws IOException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 
 public interface ManagementService {
 
-    //void modifyFilebeatConf(String path) throws Exception;
+    void modifyFilebeatConf(String path) throws Exception;
 
 
     void registerServerToMonitor(RegisterServerDto serverInfo) throws IOException;
@@ -23,5 +23,8 @@ public interface ManagementService {
 
 
 	List<Object> getServerList() throws IOException;
+
+
+	List<HashMap<String, Object>> getKeywordCountList() throws IOException;
 
 }
