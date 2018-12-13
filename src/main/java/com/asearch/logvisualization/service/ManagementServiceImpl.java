@@ -1,5 +1,10 @@
 package com.asearch.logvisualization.service;
 
+import com.asearch.logvisualization.dto.DateCount;
+import com.asearch.logvisualization.dto.KeywordByDate;
+import com.asearch.logvisualization.dto.KeywordCountModel;
+import com.asearch.logvisualization.dto.KeywordListModel;
+import com.asearch.logvisualization.dto.KeywordModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import lombok.AllArgsConstructor;
@@ -39,6 +44,7 @@ import java.util.Map;
 public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
+    private AlarmService alarmService;
     
     @Override
     public void modifyFilebeatConf(String path) throws Exception{
@@ -92,9 +98,10 @@ public class ManagementServiceImpl implements ManagementService {
     		if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
     			HashMap<String, Object> putData = new HashMap<String, Object>();
     			putData.put("timestamp", "Exception");
-    			putData.put("lasttime", -1);
-    			putData.put("server", convert.get("host_ip"));
-
+    			putData.put("lasttime", 9999);
+    			putData.put("host_ip", convert.get("host_ip"));
+				putData.put("host_name", convert.get("host_name"));
+    			
     			result.add(putData);
 
     			//이곳에서 다시 쿼리문 작성? try catch를 없애버리고 throws로 처리해버리자.
@@ -216,6 +223,7 @@ public class ManagementServiceImpl implements ManagementService {
 		SearchRequest searchRequest = new SearchRequest("server");
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.size(100);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
@@ -230,8 +238,46 @@ public class ManagementServiceImpl implements ManagementService {
 	}
 
 	@Override
-	public List<HashMap<String, Object>> getKeywordCountList() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+	public KeywordCountModel getKeywordCountList(String hostIp) throws IOException {
+		KeywordCountModel result = new KeywordCountModel();
+		
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		Calendar calendar = Calendar.getInstance();
+		Date date = new Date();
+		
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchQuery("host_ip", hostIp));
+		SearchRequest searchRequest = new SearchRequest("keyword").types("doc").source(searchSourceBuilder);
+		
+		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+		response.getHits().forEach(item -> {
+			System.out.println(item);
+			String host_ip = item.getSourceAsMap().get("host_ip").toString();
+			String keyword = item.getSourceAsMap().get("keyword").toString();
+			
+			KeywordByDate keywordByDate = new KeywordByDate();
+			keywordByDate.setKeyword(keyword);
+			
+			result.getDateList().add(keywordByDate);
+			
+			for(int i = 0; i < 10; i++) {
+				calendar.setTime(date);
+				calendar.add(Calendar.DATE, -i);
+				String index = "filebeat-6.5.0-"+simpleDateFormat.format(calendar.getTime());
+				SearchSourceBuilder searchSourceBuilder1 = new SearchSourceBuilder();
+				searchSourceBuilder1.query(QueryBuilders.matchQuery("beat.name", host_ip));
+				searchSourceBuilder1.query(QueryBuilders.matchQuery("message", keyword));
+				SearchRequest searchRequest1 = new SearchRequest(index).types("doc").source(searchSourceBuilder1);
+				
+				try {
+					SearchResponse response1 = client.search(searchRequest1, RequestOptions.DEFAULT);
+					keywordByDate.getDateCount().add(new DateCount(simpleDateFormat.format(calendar.getTime()), response1.getHits().getTotalHits()));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		return result;
 	}
 }

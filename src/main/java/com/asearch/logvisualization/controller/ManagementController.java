@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.controller;
 
+import com.asearch.logvisualization.dto.KeywordCountModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.service.ManagementService;
 import io.swagger.annotations.Api;
@@ -88,9 +89,9 @@ public class ManagementController {
             @ApiResponse(code = 404, message = "Not Found")
     })
     @CrossOrigin
-    @GetMapping("/datecount")
-    public ResponseEntity<List<HashMap<String, Object>>> getKeywordCountList() throws Exception{
-    	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getKeywordCountList(), HttpStatus.OK);
+    @GetMapping("/keywordcount")
+    public ResponseEntity<KeywordCountModel> getKeywordCountList(@RequestParam(value = "hostIp", required = true) String hostIp) throws Exception{
+    	ResponseEntity<KeywordCountModel> rs = new ResponseEntity<KeywordCountModel>(managementService.getKeywordCountList(hostIp), HttpStatus.OK);
         return rs;
     }
 }

@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.service;
 
+import com.asearch.logvisualization.dto.KeywordCountModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 
 import java.io.IOException;
@@ -25,6 +26,6 @@ public interface ManagementService {
 	List<Object> getServerList() throws IOException;
 
 
-	List<HashMap<String, Object>> getKeywordCountList() throws IOException;
+	KeywordCountModel getKeywordCountList(String hostIp) throws IOException;
 
 }
