@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.service;
 
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -16,4 +17,7 @@ public interface BaseService {
 
 
     IndexRequest buildIndexRequest(String index, String type, Map<String, Object> jsonMap);
+
+
+    DeleteRequest buildDeleteRequest(String index, String type, String id);
 }

@@ -6,6 +6,7 @@ import com.asearch.logvisualization.dto.KeywordListModel;
 import com.asearch.logvisualization.dto.KeywordModel;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import com.asearch.logvisualization.exception.InternalServerErrorException;
+import com.asearch.logvisualization.exception.NotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -34,7 +35,6 @@ import static com.asearch.logvisualization.util.Constant.KEYWORD_TYPE;
 @Slf4j
 public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
-    private RestHighLevelClient client;
     private AlarmDaoImpl alarmDao;
 
     @Override
@@ -43,50 +43,44 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
         SearchHit[] searchHits = alarmDao.getExistedKeyword(searchRequest, buildSearchSourceRequest(), new String[]{"keyword", "host_ip"},
                 new String[]{keyword.getKeyword(), keyword.getHostIp()});
-        if (searchHits.length == 1) {
-            log.info("AAAAA");
-            throw new AlreadyExistsException("Already exist");
-        }
-        else {
-            Map<String, Object> jsonMap = new HashMap<>();
-            jsonMap.put("keyword", keyword.getKeyword());
-            jsonMap.put("host_ip", keyword.getHostIp());
-            IndexRequest indexRequest = buildIndexRequest(KEYWORD_INDEX, KEYWORD_TYPE, jsonMap);
-            IndexResponse indexResponse = alarmDao.indexNewKeyword(indexRequest);
-            if (!indexResponse.getResult().toString().equals("CREATED")) throw new InternalServerErrorException("Not created");
-        }
+
+        for (SearchHit searchHit : searchHits)
+            if (searchHit.getSourceAsMap().get("keyword").toString().equals(keyword.getKeyword()))
+                throw new AlreadyExistsException("Already Exist");
+
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("keyword", keyword.getKeyword());
+        jsonMap.put("host_ip", keyword.getHostIp());
+        IndexRequest indexRequest = buildIndexRequest(KEYWORD_INDEX, KEYWORD_TYPE, jsonMap);
+        IndexResponse indexResponse = alarmDao.indexNewKeyword(indexRequest);
+        if (!indexResponse.getResult().toString().equals("CREATED"))
+            throw new InternalServerErrorException("Not created");
     }
 
-    //TODO length가 1일때만 지우기.
     @Override
-    public boolean removeKeyword(AlarmKeywordDto keyword) throws IOException {
-        boolean flag = false;
-        String documentId = null;
-        SearchRequest searchRequest = new SearchRequest("mytest");
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchQuery("keyword", keyword.getKeyword()));
-        searchRequest.source(searchSourceBuilder);
-        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+    public void removeKeyword(AlarmKeywordDto keyword) throws IOException {
 
-        if (response.getHits().getHits().length == 0) return false;
+        String documentId = null;
+
+        SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
+        SearchHit[] searchHits = alarmDao.getExistedKeyword(searchRequest, buildSearchSourceRequest(), new String[]{"keyword", "host_ip"},
+                new String[]{keyword.getKeyword(), keyword.getHostIp()});
+
+        for (SearchHit searchHit : searchHits)
+            if (searchHit.getSourceAsMap().get("keyword").toString().equals(keyword.getKeyword()))
+                documentId = searchHit.getId();
+        if (documentId == null)
+            throw new NotFoundException("No Data");
         else {
-            for (SearchHit searchHit : response.getHits().getHits())
-                if (keyword.getKeyword().equals(searchHit.getSourceAsMap().get("keyword").toString())) {
-                    flag = true;
-                    documentId = searchHit.getId();
-                }
-            if (flag) {
-                //같은게 있을시
-                DeleteRequest deleteRequest = new DeleteRequest("mytest", "keyword", documentId);
-                DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
-                return true;
-            } else return false;
+            DeleteRequest deleteRequest = buildDeleteRequest(KEYWORD_INDEX, KEYWORD_TYPE, documentId);
+            DeleteResponse deleteResponse = alarmDao.removeKeywordDocument(deleteRequest);
+            //TODO 삭제 확인 할 것
         }
     }
 
     @Override
     public List<KeywordListModel> getKeywordList() throws IOException {
-        SearchRequest searchRequest = buildSearchRequest("keyword", "doc");
+        SearchRequest searchRequest = buildSearchRequest(KEYWORD_INDEX, KEYWORD_TYPE);
         SearchHit[] searchHits = alarmDao.getKeywordList(searchRequest, buildSearchSourceRequest(), "all", 1000);
         List<KeywordListModel> keywordListModels = new ArrayList<>();
         Stream<SearchHit> hitStream = Arrays.stream(searchHits);
@@ -104,7 +98,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 });
                 if (!flag.get()) {
                     keywordListModels.add(new KeywordListModel(x.getSourceAsMap().get("host_ip").toString(), new ArrayList<>()));
-                    keywordListModels.get(keywordListModels.size()-1).getKeywords().add(new KeywordModel(x.getSourceAsMap().get("keyword").toString()));
+                    keywordListModels.get(keywordListModels.size() - 1).getKeywords().add(new KeywordModel(x.getSourceAsMap().get("keyword").toString()));
                 }
             }
         });
