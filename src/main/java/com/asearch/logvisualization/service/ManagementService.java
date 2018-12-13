@@ -1,13 +1,10 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dto.KeywordCountModel;
-import com.asearch.logvisualization.dto.RegisterServerDto;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
+import com.asearch.logvisualization.dto.RegisterServerDto;
 
 public interface ManagementService {
 
@@ -26,6 +23,9 @@ public interface ManagementService {
 	List<Object> getServerList() throws IOException;
 
 
-	KeywordCountModel getKeywordCountList(String hostIp) throws IOException;
+	//KeywordCountModel getKeywordCountList(String hostIp) throws IOException;
+
+
+	void deleteServerToMonitor(String hostIp)  throws IOException;
 
 }

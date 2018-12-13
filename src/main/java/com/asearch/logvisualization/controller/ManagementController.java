@@ -1,20 +1,29 @@
 package com.asearch.logvisualization.controller;
 
-import com.asearch.logvisualization.dto.KeywordCountModel;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.service.ManagementService;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
 
 @Api(description = "관리", tags = {"management"})
 @AllArgsConstructor
@@ -83,7 +92,7 @@ public class ManagementController {
         return rs;
     }
     
-    @ApiOperation(value = "키워드별 로그갯수 출력", notes = "키워드별 로그갯수 출력.")
+    /*@ApiOperation(value = "키워드별 로그갯수 출력", notes = "키워드별 로그갯수 출력.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "Not Found")
@@ -91,7 +100,18 @@ public class ManagementController {
     @CrossOrigin
     @GetMapping("/keywordcount")
     public ResponseEntity<KeywordCountModel> getKeywordCountList(@RequestParam(value = "hostIp", required = true) String hostIp) throws Exception{
-    	ResponseEntity<KeywordCountModel> rs = new ResponseEntity<KeywordCountModel>(managementService.getKeywordCountList(hostIp), HttpStatus.OK);
-        return rs;
+        return new ResponseEntity<KeywordCountModel>(managementService.getKeywordCountList(hostIp), HttpStatus.OK);
+    }*/
+    
+    @ApiOperation(value = "모니터링 할 서버 삭제", notes = "모니터링 할 서버를 삭제한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @DeleteMapping("/deleteserver") //
+    public ResponseEntity deleteServerToMonitor(@RequestParam(value = "hostIp", required = true) String hostIp) throws IOException {
+    	managementService.deleteServerToMonitor(hostIp);
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

@@ -1,30 +1,5 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dto.DateCount;
-import com.asearch.logvisualization.dto.KeywordByDate;
-import com.asearch.logvisualization.dto.KeywordCountModel;
-import com.asearch.logvisualization.dto.KeywordListModel;
-import com.asearch.logvisualization.dto.KeywordModel;
-import com.asearch.logvisualization.dto.RegisterServerDto;
-import com.asearch.logvisualization.exception.AlreadyExistsException;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -37,6 +12,26 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.stereotype.Service;
+
+import com.asearch.logvisualization.dto.RegisterServerDto;
+import com.asearch.logvisualization.exception.AlreadyExistsException;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
 @Service
@@ -237,7 +232,7 @@ public class ManagementServiceImpl implements ManagementService {
 		return result;
 	}
 
-	@Override
+	/*@Override
 	public KeywordCountModel getKeywordCountList(String hostIp) throws IOException {
 		KeywordCountModel result = new KeywordCountModel();
 		
@@ -279,5 +274,27 @@ public class ManagementServiceImpl implements ManagementService {
 		});
 		
 		return result;
+	}*/
+
+	@Override
+	public void deleteServerToMonitor(String hostIp) throws IOException {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchQuery("host_ip", hostIp));
+		SearchRequest searchRequest = new SearchRequest("server").types("doc").source(searchSourceBuilder);
+		
+		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+		
+		response.getHits().forEach(item -> {
+			DeleteRequest deleteRequest = new DeleteRequest("server", "doc", item.getId());
+	        try {
+				DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+		
+		//DeleteRequest deleteRequest = new DeleteRequest("server", "doc", hostIp);
+        //DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+		
 	}
 }
