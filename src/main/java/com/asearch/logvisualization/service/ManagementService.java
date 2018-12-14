@@ -1,19 +1,17 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dto.RegisterServerDto;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-
-import org.springframework.http.ResponseEntity;
 
 public interface ManagementService {
 
     void modifyFilebeatConf(String path) throws Exception;
 
 
-    void registerServerToMonitor(RegisterServerDto serverInfo) throws IOException;
+    void registerServerToMonitor(RegisterServerModel serverInfo) throws IOException;
 
 
     List<HashMap<String, Object>> getLogCountList() throws Exception;
@@ -23,4 +21,7 @@ public interface ManagementService {
 
 
 	List<Object> getServerList() throws IOException;
+
+
+    List<RegisterServerModel> getServerListToMonitor() throws IOException;
 }

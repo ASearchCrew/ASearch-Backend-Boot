@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface AlarmService {
 
-    void registerAlarmKeyword(AlarmKeywordDto keyword) throws IOException;
+    void registerAlarmKeyword(AlarmKeywordDto keywordInfo) throws IOException;
 
     void removeKeyword(AlarmKeywordDto keyword) throws IOException;
 

@@ -12,5 +12,5 @@ import java.util.Date;
 public class AlarmKeywordDto {
 
     private String keyword;
-    private String hostIp;
+    private String hostName;
 }

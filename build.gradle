@@ -53,4 +53,6 @@ dependencies {
 //    implementation('org.elasticsearch:elasticsearch')
     //json - fcm?
     compile group: 'org.json', name: 'json', version: '20180813'
+    //gson
+    compile('com.google.code.gson:gson:2.8.2')
 }

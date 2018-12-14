@@ -33,8 +33,8 @@ public class AlarmController {
     })
     @CrossOrigin
     @PostMapping("/keyword")
-    public ResponseEntity registerAlarmKeyword(@RequestBody AlarmKeywordDto keyword) throws IOException {
-        alarmService.registerAlarmKeyword(keyword);
+    public ResponseEntity registerAlarmKeyword(@RequestBody AlarmKeywordDto keywordInfo) throws IOException {
+        alarmService.registerAlarmKeyword(keywordInfo);
         return new ResponseEntity(HttpStatus.CREATED);
     }
 

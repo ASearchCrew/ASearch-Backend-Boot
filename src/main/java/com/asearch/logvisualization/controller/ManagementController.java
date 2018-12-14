@@ -1,6 +1,6 @@
 package com.asearch.logvisualization.controller;
 
-import com.asearch.logvisualization.dto.RegisterServerDto;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.service.ManagementService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,10 +41,21 @@ public class ManagementController {
     })
     @CrossOrigin
     @PostMapping("/server") // monitoring/server
-    public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerDto serverInfo) throws IOException {
+    public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerModel serverInfo) throws IOException {
         managementService.registerServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
+
+    @ApiOperation(value = "모니터링 할 서버 리스트 조회", notes = "모니터링 할 서버 리스트를 조회 한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+    })
+    @CrossOrigin
+    @GetMapping("/server/list") // monitoring/server
+    public ResponseEntity<List<RegisterServerModel>> getServerListToMonitor() throws IOException {
+        return new ResponseEntity<>(managementService.getServerListToMonitor(), HttpStatus.OK);
+    }
+
     
     @ApiOperation(value = "서버별 로그갯수 출력", notes = "서버별로 로그갯수 출력.")
     @ApiResponses(value = {

@@ -8,11 +8,11 @@ import java.util.List;
 @Data
 public class KeywordListModel {
 
-    private String hostIp;
+    private String hostName;
     private List<KeywordModel> keywords;
 
-    public KeywordListModel(String hostIp, List<KeywordModel> keywords) {
-        this.hostIp = hostIp;
+    public KeywordListModel(String hostName, List<KeywordModel> keywords) {
+        this.hostName = hostName;
         this.keywords = keywords;
     }
 }
