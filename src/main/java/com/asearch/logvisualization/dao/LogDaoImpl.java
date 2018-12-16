@@ -32,7 +32,8 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
                                   @Nullable String search,
                                   boolean isStream,
                                   long initialCount,
-                                  long upScrollOffset) throws IOException {
+                                  long upScrollOffset,
+                                  @Nullable String id) throws IOException {
         log.info(search + "--------------------------------------------------------------------");
         /**
          *
@@ -167,8 +168,15 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
                         log.info("검색어 없는 Up(위로 Scroll) 구역");
                         log.info("time = {}" , Long.parseLong(time));
                         //TODO 로그 찍기 parameter cannot be negative 에러를 찾기위해서  -- 음수는 안된다는게 무슨 말이지 모르겠다.
-                        long fromCount = initialCount - (upScrollOffset * 20);
+                        /**
+                         * - initialCount 는 한단계 전의 response.sumCount 로 계속 바뀐다. (왜냐하면 시간으로 범위를 지정했기 때문에?)
+                         * - 만약,
+                         */
+                        long fromCount = initialCount - (upScrollOffset * 5);
+                        log.info("initialCount = {}", initialCount);
+                        log.info("fromCount = {}", fromCount);
 
+                        log.info("id = {}",id);
 //                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 //                        Date date = dateFormat.parse(time);
 //                        calendar.setTime(date);
@@ -188,12 +196,21 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
 
                         //TODO 검색어가 있을 경우는 시간이 [현재시간-1000초(16분)] 보다 적은 데이터를 못보여주게 된다. -- EX 컴퓨터 개고수
                         searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(Long.parseLong(time) - 1000000)).to(String.valueOf(Long.parseLong(time))));
+                        Object[] objects = new Object[]{time};
+                        searchSourceBuilder.searchAfter(objects);
                         searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-//                        searchSourceBuilder.sort(new FieldSortBuilder("offset").order(SortOrder.DESC));
+//                        searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
+                        //TODO searchAfter 에서 timeStamp 만 이용하게 되면 logData 가 누락된다.
 
-                        searchSourceBuilder.from(Integer.parseInt(String.valueOf(fromCount))); // --> offset --//FIXME 시간 없이 쓰면 too large 에러 난다.
+                        /**
+                         * 총 9000000 (900만 개)
+                         * 100000 (10만 개) - center
+                         * ====
+                         * 1000개 -- up
+                         */
+//                        searchSourceBuilder.from(Integer.parseInt(String.valueOf(fromCount))); // --> offset --//FIXME 시간 없이 쓰면 too large 에러 난다.
 //                        searchSourceBuilder.from(0);
-                        searchSourceBuilder.size(20);
+                        searchSourceBuilder.size(5);
 //                        searchRequest.scroll(TimeValue.timeValueMinutes(1L));
 
 //                        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(Long.parseLong(time) - 1000000)).to(String.valueOf(Long.parseLong(time) - 10)));
@@ -209,13 +226,20 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
                     case "center":
                         log.info("검색어 없는 Center 구역");
                         log.info("Calender - Time in milliseconds : " + calendar.getTimeInMillis());
-                        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(calendar.getTimeInMillis() - 300000)).to(calendar.getTimeInMillis()));
 
+                        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(calendar.getTimeInMillis() - 30000)).to(calendar.getTimeInMillis()));
+                        /**
+                         * 시간 범위를 지정 하지 않으면 전체 count 를 가져오고, 지정하면 지정한만큼의 count 만 들고 오게 된다.
+                         */
                         searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
-                        searchSourceBuilder.size(20);
-//                        searchSourceBuilder.query(QueryBuilders.
-//                                rangeQuery("@timestamp").
-//                                from(String.valueOf(calendar.getTimeInMillis() - 3000000)). // 3000초
+                        /**
+                         *  처음은 시간 범위를 넣지 않고 DESC 로 해도 되지만 -- 로그가 연속적으로 계속 쌓인다는 가정이고실제로도 그렇기 때문에,
+                         *  시간범위 30초 사이의 데이터를 ASC 로 가져왔다. (//TODO ASC 를 DESC 로 바꾸자. 왜냐하면, ASC로 하면 가장 최근 데이터가 짤릴수도 있기 때문에.
+                         */
+                        searchSourceBuilder.size(5);
+//                        searchSourceBuilder.query(
+//                                QueryBuilders.rangeQuery("@timestamp").
+//                                from(String.valueOf(calendar.getTimeInMillis() - 30000)). // 30초
 //                                to(calendar.getTimeInMillis()));  // 현재시간
                         break;
                     default:

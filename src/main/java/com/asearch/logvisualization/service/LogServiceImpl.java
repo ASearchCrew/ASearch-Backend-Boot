@@ -34,11 +34,14 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
      * 로그를 가져오는 API
      */
     @Override
-    public LogInfoDto getRawLogs(String direction, String hostName, String time,
+    public LogInfoDto getRawLogs(String direction,
+                                 String hostName,
+                                 String time,
                                  String search,
                                  boolean isStream,
                                  long initialCount,
-                                 long upScrollOffset) throws IOException, ParseException {
+                                 long upScrollOffset,
+                                 String id) throws IOException, ParseException {
 
         /**
          *  Dao 에 DataAccess 를 요청한다.
@@ -52,7 +55,8 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                 search,
                 isStream,
                 initialCount,
-                upScrollOffset);
+                upScrollOffset,
+                id);
 
         log.info("총 Count = {}" , response.getHits().getTotalHits());
 
