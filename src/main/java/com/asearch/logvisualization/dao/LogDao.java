@@ -9,7 +9,15 @@ import java.io.IOException;
 
 public interface LogDao {
 
-    SearchResponse getLogs(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String direction, String time, @Nullable String search, boolean isStream) throws IOException;
+    SearchResponse getLogs(SearchRequest searchRequest,
+                           SearchSourceBuilder searchSourceBuilder,
+                           String direction,
+                           String hostName,
+                           String time,
+                           @Nullable String search,
+                           boolean isStream,
+                           long initialCount,
+                           long upScrollOffset) throws IOException;
 
     SearchResponse getDocumentDetail(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String id) throws IOException;
 }

@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.controller;
 
+import com.asearch.logvisualization.dto.LogInfoDto;
 import com.asearch.logvisualization.dto.LogModel;
 import com.asearch.logvisualization.service.LogService;
 import io.micrometer.core.lang.Nullable;
@@ -26,6 +27,25 @@ public class LogController {
 
     private LogService logService;
 
+    /**
+     * Pre
+     * 1. size = 100
+     *
+     *
+     * Request
+     * 1. direction
+     * 2. time
+     * 3. search(@nullable)
+     * 4. isStream
+     *
+     * 5. upScrollOffset
+     * 6.
+     *
+     * Response
+     * 1. sumCount
+     *
+     */
+
     @ApiOperation(value = "로그 조회 & 검색", notes = "로그를 조회 & 검색 한다.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
@@ -33,12 +53,16 @@ public class LogController {
     })
     @CrossOrigin
     @GetMapping
-    public ResponseEntity<List<LogModel>> getDocuments(@RequestParam("direction") String direction,
-                                                       @RequestParam("time") String time,
-                                                       @Nullable @RequestParam("search") String search,
-                                                       @RequestParam("isStream") boolean isStream) throws Exception {
+    public ResponseEntity<LogInfoDto> getDocuments(@RequestParam("direction") String direction,
+                                                   @RequestParam("hostName") String hostName,
+                                                   @RequestParam("time") String time,
+                                                   @Nullable @RequestParam("search") String search,
+                                                   @RequestParam("isStream") boolean isStream,
+                                                   @Nullable @RequestParam("initialCount") long initialCount,
+                                                   @RequestParam("upScrollOffset") long upScrollOffset) throws Exception {
         log.info("IN");
-        return new ResponseEntity<>(logService.getRawLogs(direction, time, search, isStream), HttpStatus.OK);
+        return new ResponseEntity<>(logService.getRawLogs(direction, hostName, time,
+                search, isStream, initialCount, upScrollOffset), HttpStatus.OK);
     }
 
     @ApiOperation(value = "로그 상세화면 조회", notes = "로그 상세화면을 조회 한다.")
