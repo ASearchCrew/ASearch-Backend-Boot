@@ -1,6 +1,7 @@
 package com.asearch.logvisualization.service;
 
 import com.asearch.logvisualization.dto.RegisterServerModel;
+import com.asearch.logvisualization.dto.ServerListDto;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,5 +24,5 @@ public interface ManagementService {
 	List<Object> getServerList() throws IOException;
 
 
-    List<RegisterServerModel> getServerListToMonitor() throws IOException;
+    List<ServerListDto> getServerListToMonitor() throws IOException;
 }

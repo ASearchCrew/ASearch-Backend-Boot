@@ -1,12 +1,14 @@
 package com.asearch.logvisualization.controller;
 
 import com.asearch.logvisualization.dto.RegisterServerModel;
+import com.asearch.logvisualization.dto.ServerListDto;
 import com.asearch.logvisualization.service.ManagementService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+@Slf4j
 @Api(description = "관리", tags = {"management"})
 @AllArgsConstructor
 @RestController
@@ -42,6 +45,7 @@ public class ManagementController {
     @CrossOrigin
     @PostMapping("/server") // monitoring/server
     public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerModel serverInfo) throws IOException {
+        log.info(serverInfo.toString());
         managementService.registerServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
@@ -52,7 +56,7 @@ public class ManagementController {
     })
     @CrossOrigin
     @GetMapping("/server/list") // monitoring/server
-    public ResponseEntity<List<RegisterServerModel>> getServerListToMonitor() throws IOException {
+    public ResponseEntity<List<ServerListDto>> getServerListToMonitor() throws IOException {
         return new ResponseEntity<>(managementService.getServerListToMonitor(), HttpStatus.OK);
     }
 

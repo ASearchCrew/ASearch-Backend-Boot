@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.dto;
 
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -9,7 +10,7 @@ import java.util.List;
 public class KeywordListModel {
 
     private String hostName;
-    private List<KeywordModel> keywords;
+    @Nullable private List<KeywordModel> keywords;
 
     public KeywordListModel(String hostName, List<KeywordModel> keywords) {
         this.hostName = hostName;

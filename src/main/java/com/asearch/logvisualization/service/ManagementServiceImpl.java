@@ -2,6 +2,7 @@ package com.asearch.logvisualization.service;
 
 import com.asearch.logvisualization.dao.ManagementDao;
 import com.asearch.logvisualization.dto.RegisterServerModel;
+import com.asearch.logvisualization.dto.ServerListDto;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import com.asearch.logvisualization.exception.InternalServerErrorException;
 import lombok.AllArgsConstructor;
@@ -225,12 +226,12 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
     }
 
     @Override
-    public List<RegisterServerModel> getServerListToMonitor() throws IOException {
-        List<RegisterServerModel> models = new ArrayList<>();
+    public List<ServerListDto> getServerListToMonitor() throws IOException {
+        List<ServerListDto> models = new ArrayList<>();
         managementDao.getServerList(buildSearchRequest(MANAGEMENT_SERVER_INDEX, null, null), buildSearchSourceRequest())
                 .getHits()  //x.getId(), x.getSourceAsMap().get("hostIp")
                 .forEach(x -> {
-                    models.add(RegisterServerModel
+                    models.add(ServerListDto
                             .builder()
                             .hostIp(x.getSourceAsMap().get("hostIp").toString())
                             .hostName(x.getId())

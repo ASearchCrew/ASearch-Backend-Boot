@@ -15,4 +15,6 @@ public interface AlarmService {
     void removeKeyword(AlarmKeywordDto keyword) throws IOException;
 
     List<KeywordListModel> getKeywordList() throws IOException;
+
+    void detectKeyword() throws IOException;
 }

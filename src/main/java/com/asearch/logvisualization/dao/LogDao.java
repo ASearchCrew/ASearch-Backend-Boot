@@ -18,7 +18,16 @@ public interface LogDao {
                            boolean isStream,
                            long initialCount,
                            long upScrollOffset,
-                           @Nullable String id) throws IOException;
+                           @Nullable String id,
+                           @Nullable String searchTime) throws IOException;
 
     SearchResponse getDocumentDetail(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String id) throws IOException;
+
+    SearchResponse getStreamBigData(SearchRequest searchRequest,
+                                    SearchSourceBuilder searchSourceBuilder,
+                                    String direction,
+                                    String hostName,
+                                    String time,
+                                    @Nullable String search,
+                                    @Nullable String id) throws IOException;
 }

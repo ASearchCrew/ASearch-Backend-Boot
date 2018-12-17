@@ -3,6 +3,7 @@ package com.asearch.logvisualization.service;
 import com.asearch.logvisualization.dao.LogDao;
 import com.asearch.logvisualization.dto.LogInfoDto;
 import com.asearch.logvisualization.dto.LogModel;
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.search.SearchResponse;
@@ -41,8 +42,9 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                                  boolean isStream,
                                  long initialCount,
                                  long upScrollOffset,
-                                 String id) throws IOException, ParseException {
-
+                                 String id,
+                                 String searchTime) throws IOException, ParseException {
+        //TODO searchTime 추가하기.
         /**
          *  Dao 에 DataAccess 를 요청한다.
          */
@@ -56,9 +58,25 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                 isStream,
                 initialCount,
                 upScrollOffset,
-                id);
+                id,
+                searchTime);
 
+        log.info("");
         log.info("총 Count = {}" , response.getHits().getTotalHits());
+
+        /**
+         *  isStream == true 일때, fix size (temp=100) > 100 일때는, 그냥 데이터를 return 해준다.
+         */
+        if (isStream && direction.equals("stream")) {
+            if (response.getHits().getHits().length > 100)
+                response = logDao.getStreamBigData(buildSearchRequest(hostName+"*", null, null),
+                        buildSearchSourceRequest(),
+                        direction,
+                        hostName,
+                        time,
+                        search,
+                        id);
+        }
 
         /**
          * Data 담기와, 시간 변환
@@ -74,14 +92,14 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
         for (SearchHit hit : results) {
             Date date = dateFormat.parse(hit.getSourceAsMap().get("@timestamp").toString());
             calendar.setTime(date);
-            log.info("밀리세컨 : {} ", calendar.getTimeInMillis());
-            log.info(hit.getId());
-            log.info(hit.getSourceAsMap().get("message").toString());
-            log.info("=========1 for 문 끝=========");
+//            log.info("밀리세컨 : {} ", calendar.getTimeInMillis());
+            log.info("id = {}",hit.getId());
+//            log.info(hit.getSourceAsMap().get("message").toString());
             logList.add(new LogModel(hit.getId(), hit.getSourceAsMap().get("@timestamp").toString(), hit.getSourceAsMap().get("message").toString()));
         }
         infoDto.setLogs(logList);
-        log.info("===========================한개의 Request 끝==================================");
+        log.info("===================================한개의 Request 끝==========================================");
+        log.info("");
         return infoDto;
     }
 

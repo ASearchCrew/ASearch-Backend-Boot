@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestPushController {
 
+    /**
+     * 과장님은 클라이언트에서 for 문을 돌려서 백엔드의 eventTable(MariaDB) 만을 바라보게 해놓았다. *************
+     */
+
     private final String TOPIC = "JavaSampleApproach";
 
     @Autowired
