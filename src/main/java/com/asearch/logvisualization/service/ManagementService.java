@@ -31,5 +31,5 @@ public interface ManagementService {
 	
 
 	LogCountBySecondsModel getLogCountBySeconds() throws IOException;
-
+	
 }

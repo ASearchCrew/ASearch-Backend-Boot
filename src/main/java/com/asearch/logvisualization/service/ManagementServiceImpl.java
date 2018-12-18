@@ -43,6 +43,7 @@ public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
     //private AlarmService alarmService;
+    private IndexCacheService indexCacheService;
     
     @Override
     public void modifyFilebeatConf(String path) throws Exception{
@@ -125,104 +126,129 @@ public class ManagementServiceImpl implements ManagementService {
     	List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
     	List<Object> serverList = getServerList();
     	
-    	GetIndexRequest request = new GetIndexRequest().indices("_all"); 
-    	request.includeDefaults(true); 
-    	request.indicesOptions(IndicesOptions.lenientExpandOpen());
+    	List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
     	
-    	GetIndexResponse getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
+    	for(int i = 0; i < serverList.size(); i++) {
+			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
+			HashMap<String, Object> putData = new HashMap<String, Object>();
+			
+			for(int j = 0; j < nowIndexList.size(); j++) {
+	    		String index = nowIndexList.get(j);
+	    		
+	    		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+				searchSourceBuilder.size(1);
+				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
+				searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
 
-    	for(int j = 0; j < getIndexResponse.getIndices().length; j++) {
-    		String index = getIndexResponse.getIndices()[j].toString();
+				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 
-    		if(index.contains("filebeat")) {
-    			if(index.contains(simpleDateFormat.format(date))) {
-    				for(int i = 0; i < serverList.size(); i++) {
-    		    		HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
-    		    		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    		    		searchSourceBuilder.size(1);
-    		    		searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
-    		    		searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-    		    		SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+				if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
+					Object lastTime = putData.get("lastTime");
+					
+					if(lastTime == null) {
+						putData.put("timeStamp", "Exception");
+						putData.put("lastTime", 9999);
+						putData.put("hostIp", convert.get("hostIp"));
+						putData.put("hostName", convert.get("hostName"));
+					}
 
-    		    		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-    		    		
-    		    		if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
-    		    			HashMap<String, Object> putData = new HashMap<String, Object>();
-    		    			putData.put("timeStamp", "Exception");
-    		    			putData.put("lastTime", 9999);
-    		    			putData.put("hostIp", convert.get("hostIp"));
-    						putData.put("hostName", convert.get("hostName"));
-    		    			
-    		    			result.add(putData);
+					result.add(putData);
+				}else {
+					Object lastTime = putData.get("lastTime");
+					
+					response.getHits().forEach(item -> {
+						ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
 
-    		    			//이곳에서 다시 쿼리문 작성? try catch를 없애버리고 throws로 처리해버리자.
-    		    			//
-    		    			/*searchSourceBuilder = new SearchSourceBuilder();
+						String timezone = utcDateTime.toString();
+						String logTime = item.getSourceAsMap().get("@timestamp").toString();
+						int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
+						int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
+						int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
+						int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
+						int resultHour = nowHour - logHour;
 
-    							searchSourceBuilder.size(1);
-    							searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", serverList[i]));
-    							searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+						if(nowMinute - logMinute < 0) {
+							if(resultHour > 0) {
+								resultHour -= 1;
+							}
+						}
+						//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
+						
+						if(lastTime != null) {
+							if((int)lastTime >= resultHour) {
+								putData.put("timeStamp", logTime);
+								putData.put("lastTime", resultHour);
+								putData.put("hostIp", convert.get("hostIp"));
+								putData.put("hostName", convert.get("hostName"));
+							}
+						}else {
+							putData.put("timeStamp", logTime);
+							putData.put("lastTime", resultHour);
+							putData.put("hostIp", convert.get("hostIp"));
+							putData.put("hostName", convert.get("hostName"));
+						}
 
-    							SearchRequest reSearchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
-    							// 이곳에서 다시 쿼리를 받아온다.
+						result.add(putData);
+					});
+				}
+			}
 
-    							if(response.getHits().getTotalHits() == 0) {
-    								putData.put("timestamp", "Exception");
-    								putData.put("lasttime", 24);
-    								putData.put("server", serverName);
+		}
+    	
+    	/*for(int i = 0; i < nowIndexList.size(); i++) {
+    		String index = nowIndexList.get(i);
+    		
+    		for(int j = 0; j < serverList.size(); j++) {
+    			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(j);
+    			SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    			searchSourceBuilder.size(1);
+    			searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
+    			searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
 
-    								result.add(putData);
-    							}else {
-    								//이곳에서 timestamp 다시 정의해줘서 보내준다.
-    								//시간도 계산해서 보내줘야함.
-    								//현재시간과 과거 데이터 시간.
-    								//현재시간이 01시. 과거시간이 23시면...
-    								//2시간차이.
-    								//정확한 계산이 힘들다
+    			SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 
-    								putData.put("timestamp", "Exception");
-    								putData.put("lasttime", 24);
-    								putData.put("server", serverName);
+    			SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-    								result.add(putData);
-    							}*/
-    		    		}else {
-    		    			response.getHits().forEach(item -> {
-    		    				ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
+    			if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
+    				HashMap<String, Object> putData = new HashMap<String, Object>();
+    				putData.put("timeStamp", "Exception");
+    				putData.put("lastTime", 9999);
+    				putData.put("hostIp", convert.get("hostIp"));
+    				putData.put("hostName", convert.get("hostName"));
 
-    		    				String timezone = utcDateTime.toString();
-    		    				String logTime = item.getSourceAsMap().get("@timestamp").toString();
-    		    				int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
-    		    				int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
-    		    				int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
-    		    				int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
-    		    				int resultHour = nowHour - logHour;
+    				result.add(putData);
+    			}else {
+    				response.getHits().forEach(item -> {
+    					ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
 
-    		    				if(nowMinute - logMinute < 0) {
-    		    					if(resultHour > 0) {
-    		    						resultHour -= 1;
-    		    					}
-    		    				}
-    		    				//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
+    					String timezone = utcDateTime.toString();
+    					String logTime = item.getSourceAsMap().get("@timestamp").toString();
+    					int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
+    					int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
+    					int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
+    					int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
+    					int resultHour = nowHour - logHour;
 
-    		    				HashMap<String, Object> putData = new HashMap<String, Object>();
-    		    				putData.put("timeStamp", logTime);
-    		    				putData.put("lastTime", resultHour);
-    		    				putData.put("hostIp", convert.get("hostIp"));
-    		    				putData.put("hostName", convert.get("hostName"));
+    					if(nowMinute - logMinute < 0) {
+    						if(resultHour > 0) {
+    							resultHour -= 1;
+    						}
+    					}
+    					//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
 
-    		    				result.add(putData);
-    		    			});
-    		    		}
+    					HashMap<String, Object> putData = new HashMap<String, Object>();
+    					putData.put("timeStamp", logTime);
+    					putData.put("lastTime", resultHour);
+    					putData.put("hostIp", convert.get("hostIp"));
+    					putData.put("hostName", convert.get("hostName"));
+
+    					result.add(putData);
+    				});
     			}
     		}
-    	}
-
-    	//만약 오늘날짜 로그가 존재하지 않는다면, 이전날짜의 마지막 로그를 불러와서 보여준다.
-    	//이전날짜 로그마저 존재하지 않는다면 error처리로 보낸다.
-    	//이전날짜 시간처리도 생각해야한다.
-    	}
+    	}*/
 
     	return result;
 	}
@@ -234,37 +260,6 @@ public class ManagementServiceImpl implements ManagementService {
 		Calendar calendar = Calendar.getInstance();
 		Date date = new Date();
 		List<Object> serverList = getServerList();
-		
-		GetIndexRequest request = new GetIndexRequest().indices("_all"); 
-    	request.includeDefaults(true); 
-    	request.indicesOptions(IndicesOptions.lenientExpandOpen());
-    	
-    	GetIndexResponse getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
-    	HashMap<String, List<String>> indexs = new HashMap<String, List<String>>();
-    	
-    	for(int i = 9; i >= 0; i--) {
-    		calendar.setTime(date);
-    		calendar.add(Calendar.DATE, -i);
-    		
-    		for(int j = 0; j < getIndexResponse.getIndices().length; j++) {
-        		String index = getIndexResponse.getIndices()[j].toString();
-        		
-        		if(index.contains("filebeat")) {
-        			if(index.contains(simpleDateFormat.format(calendar.getTime()).toString())) {
-        				List<String> indexList = indexs.get(simpleDateFormat.format(calendar.getTime()).toString());
-        				
-        				if(indexList == null) {
-        					indexList = new ArrayList<String>();
-        					indexList.add(index);
-        				}else {
-        					indexList.add(index);
-        				}
-        				
-        				indexs.put(simpleDateFormat.format(calendar.getTime()).toString(), indexList);
-        			}
-        		}
-        	}
-    	}
 		
 		for(int i = 0; i < serverList.size(); i++) {
 			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
@@ -279,14 +274,13 @@ public class ManagementServiceImpl implements ManagementService {
 				calendar.add(Calendar.DATE, -j);
 				
 				String nowDate = simpleDateFormat.format(calendar.getTime()).toString();
-				
-				List<String> nowIndexList = indexs.get(nowDate);
+				List<String> nowIndexList = indexCacheService.getIndexList().get(nowDate);
+				HashMap<String, Object> innerValue = new HashMap<String, Object>();
+				innerValue.put("date", nowDate);
+				tempList.add(innerValue);
 				
 				for(int k = 0; k < nowIndexList.size(); k++) {
 					String index = nowIndexList.get(k);
-					HashMap<String, Object> innerValue = new HashMap<String, Object>();
-					innerValue.put("date", simpleDateFormat.format(calendar.getTime()));
-					
 					SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 					searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
 					
@@ -294,15 +288,13 @@ public class ManagementServiceImpl implements ManagementService {
 					
 					try {
 						long count = client.search(searchRequest, RequestOptions.DEFAULT).getHits().getTotalHits();
-						Integer tempValue = (Integer) innerValue.get("count");
+						Object tempValue = innerValue.get("count");
 						
 						if(tempValue == null) {
 							innerValue.put("count", count);
 						}else {
-							innerValue.put("count", tempValue+count);
+							innerValue.put("count", (long)tempValue+count);
 						}
-
-						tempList.add(innerValue);
 					}catch(Exception e) {
 						e.printStackTrace();
 					}
@@ -333,7 +325,7 @@ public class ManagementServiceImpl implements ManagementService {
         
 		return result;
 	}
-
+	
 	@Override
 	public List<HashMap<String, Object>> getKeywordCountList(String hostName) throws IOException {
 		List<HashMap<String, Object>> realResult = new ArrayList<HashMap<String, Object>>();
@@ -341,37 +333,6 @@ public class ManagementServiceImpl implements ManagementService {
 		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
 		Calendar calendar = Calendar.getInstance();
 		Date date = new Date();
-		
-		GetIndexRequest request = new GetIndexRequest().indices("_all"); 
-    	request.includeDefaults(true); 
-    	request.indicesOptions(IndicesOptions.lenientExpandOpen());
-    	
-    	GetIndexResponse getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
-    	HashMap<String, List<String>> indexs = new HashMap<String, List<String>>();
-    	
-    	for(int i = 9; i >= 0; i--) {
-    		calendar.setTime(date);
-    		calendar.add(Calendar.DATE, -i);
-    		
-    		for(int j = 0; j < getIndexResponse.getIndices().length; j++) {
-        		String index = getIndexResponse.getIndices()[j].toString();
-        		
-        		if(index.contains("filebeat")) {
-        			if(index.contains(simpleDateFormat.format(calendar.getTime()).toString())) {
-        				List<String> indexList = indexs.get(simpleDateFormat.format(calendar.getTime()).toString());
-        				
-        				if(indexList == null) {
-        					indexList = new ArrayList<String>();
-        					indexList.add(index);
-        				}else {
-        					indexList.add(index);
-        				}
-        				
-        				indexs.put(simpleDateFormat.format(calendar.getTime()).toString(), indexList);
-        			}
-        		}
-        	}
-    	}
 		
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 		searchSourceBuilder.query(QueryBuilders.matchQuery("_id", hostName));
@@ -398,8 +359,8 @@ public class ManagementServiceImpl implements ManagementService {
 
 					for(int i = 0; i < resultKeywordList.size(); i++) {
 						String resultKeyword = resultKeywordList.get(i).get("keyword").toString();
+						List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(calendar.getTime()).toString());
 						
-						List<String> nowIndexList = indexs.get(simpleDateFormat.format(calendar.getTime()).toString());
 						for(int k = 0; k < nowIndexList.size(); k++) {
 							String index = nowIndexList.get(k);
 							
@@ -456,36 +417,27 @@ public class ManagementServiceImpl implements ManagementService {
 		Date date = new Date();
 		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
     	LogCountBySecondsModel logCountBySecondsModel = new LogCountBySecondsModel();
+    	List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
     	
-    	GetIndexRequest request = new GetIndexRequest().indices("_all"); 
-    	request.includeDefaults(true); 
-    	request.indicesOptions(IndicesOptions.lenientExpandOpen());
+    	Instant instant = Instant.now();
+		ZoneId zoneId = ZoneId.of("UTC");
+		ZonedDateTime endTime = ZonedDateTime.ofInstant(instant, zoneId);
+		ZonedDateTime startTime = endTime.minusSeconds(60);
+    	logCountBySecondsModel.setStartTime(startTime.toString().split("Z")[0]+"Z");
+		logCountBySecondsModel.setEndTime(endTime.toString().split("Z")[0]+"Z");
     	
-    	GetIndexResponse getIndexResponse = client.indices().get(request, RequestOptions.DEFAULT);
-    	
-    	for(int i = 0; i < getIndexResponse.getIndices().length; i++) {
-    		String index = getIndexResponse.getIndices()[i].toString();
-
-    		if(index.contains("filebeat")) {
-    			if(index.contains(simpleDateFormat.format(date))) {
-    				Instant instant = Instant.now();
-    				ZoneId zoneId = ZoneId.of("UTC");
-    				ZonedDateTime endTime = ZonedDateTime.ofInstant(instant, zoneId);
-    				ZonedDateTime startTime = endTime.minusSeconds(60);
-    		    	
-    		    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    				searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
-    				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
-    				
-    				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-    				
-    				logCountBySecondsModel.setLogCount(response.getHits().getTotalHits());
-    				logCountBySecondsModel.setStartTime(startTime.toString().split("Z")[0]+"Z");
-    				logCountBySecondsModel.setEndTime(endTime.toString().split("Z")[0]+"Z");
-    			}
-    		}
+    	for(int i = 0; i < nowIndexList.size(); i++) {
+    		String index = nowIndexList.get(i);
+	    	
+	    	SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+			searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
+			SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+			
+			SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+			
+			logCountBySecondsModel.setLogCount(logCountBySecondsModel.getLogCount()+response.getHits().getTotalHits());
     	}
-
+    	
     	return logCountBySecondsModel;
 	}
 }
