@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.asearch.logvisualization.dto.KeywordCountModel;
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.service.ManagementService;

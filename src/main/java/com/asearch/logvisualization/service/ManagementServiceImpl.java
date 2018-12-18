@@ -29,7 +29,6 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
-import com.asearch.logvisualization.dto.KeywordCountModel;
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
@@ -43,13 +42,10 @@ import lombok.extern.slf4j.Slf4j;
 public class ManagementServiceImpl implements ManagementService {
 
     private RestHighLevelClient client;
-    private asdf asdf;
     //private AlarmService alarmService;
     
     @Override
     public void modifyFilebeatConf(String path) throws Exception{
-    	//System.out.println(asdf.getA());
-    	
     	/*int PORT = 8080;
     	Socket socket = new Socket("192.168.157.128", 8080);
     	
