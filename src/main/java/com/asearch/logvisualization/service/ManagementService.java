@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import com.asearch.logvisualization.dto.KeywordCountModel;
+import com.asearch.logvisualization.dto.LogCountBySecondsModel;
 import com.asearch.logvisualization.dto.RegisterServerDto;
 
 public interface ManagementService {
@@ -23,9 +25,12 @@ public interface ManagementService {
 	List<Object> getServerList() throws IOException;
 
 
-	//KeywordCountModel getKeywordCountList(String hostIp) throws IOException;
+	List<HashMap<String, Object>> getKeywordCountList(String hostName) throws IOException;
 
 
 	void deleteServerToMonitor(String hostIp)  throws IOException;
+
+
+	LogCountBySecondsModel getLogCountBySeconds() throws IOException;
 
 }
