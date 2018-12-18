@@ -12,15 +12,23 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.asearch.logvisualization.util.Constant.*;
@@ -31,6 +39,7 @@ import static com.asearch.logvisualization.util.Constant.*;
 public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     private AlarmDaoImpl alarmDao;
+    private RestHighLevelClient client;
 
     @Override
     public void registerAlarmKeyword(AlarmKeywordDto keywordInfo) throws IOException {
@@ -65,8 +74,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 //        if(res.getClass().toString().equals("String")) return;
 
         Gson gson = new Gson();
-        Type type = new TypeToken<ArrayList<KeywordDto>>() {
-        }.getType();
+        Type type = new TypeToken<ArrayList<KeywordDto>>() {}.getType();
         ArrayList<KeywordDto> arrayList = gson.fromJson(document.get("keywords").toString(), type);
 
         arrayList.forEach(x -> {
@@ -133,6 +141,8 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         return keywordListModels;
     }
 
+    //TODO 시간복잡도 를 줄이려면 어떻게 해야..?
+    //TODO last_occurrence_time 을 추가해보는 것도 좋은데 mapping 이나 여러 고려사항이 있을거 같다.
     @Override
     public void detectKeyword() throws IOException {
 
@@ -141,6 +151,115 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 buildSearchSourceRequest(), "all", 1000);
 
 //        log.info(Arrays.toString(searchHits));
+        Gson gson = new Gson();
+        Type type = new TypeToken<ArrayList<KeywordModel>>(){}.getType();
+        Stream<SearchHit> hitStream = Arrays.stream(searchHits);
+        hitStream.forEach(searchHit -> {
+            if (searchHit.getSourceAsMap().get("keywords") != null) {
+
+                //TODO - java8
+                List<KeywordModel> keywords = gson.fromJson(searchHit.getSourceAsMap().get("keywords").toString(), type);
+                List<String> strings = new ArrayList<>();
+
+                //todo Parallel
+                if (keywords.size() > 0) {
+                    keywords.forEach(keyword -> {//searchHit.getId()+"*"
+                        SearchRequest searchRequest = buildSearchRequest("_all", null, null);
+                        String[] includeFields = new String[] {"@timestamp", "message"};
+                        String[] excludeFields = new String[] {};
+                        SearchSourceBuilder searchSourceBuilder = buildSearchSourceRequest();
+                        searchSourceBuilder.fetchSource(includeFields, excludeFields);
+
+                        searchSourceBuilder.query(QueryBuilders.termQuery("message", keyword.getKeyword()));
+                        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+                        searchSourceBuilder.size(10);
+                        searchRequest.source(searchSourceBuilder);
+
+                        try {
+                            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+                            log.info(response.status().toString());
+                            log.info(response.getHits().getTotalHits() + " ~~");
+                            /** =================여기 까지 Request 끝=====================*/
+
+                            /**
+                             * 각 단일 Response 의 @timestamp 가, 기존 keyword 객체에 있는 last_occurrence_time 보다
+                             * 큰 지 (2)(@timestamp > last_occurrence_time) and (1).(last_occurrence_time 이 없다면)를 1차로 검사하고,
+                             *
+                             *   - last_occurrence_time 이 없다면 //TODO push 를 날려야 한다.
+                             *   - @timestamp <= last_occurrence_time 라면 그냥 넘어간다.
+                             *   - @timestamp > last_occurrence_time 라면
+                             *      - ( (@timestamp - last_occurrence_time) > intervalTime) = //TODO push 를 보낸다.
+                             *      - ( (@timestamp - last_occurrence_time) < intervalTime) = 그냥 넘어간다.
+                             */
+                            if (response.getHits().getTotalHits() != 0) {
+                                log.info(response.getHits().getHits()[0].toString());
+                                if (response.getHits().getHits()[0].getSourceAsMap().get("lastOccurrenceTime") == null) {
+                                    //TODO Push Service
+                                } else {
+                                    log.info(response.getHits().getHits()[0].getSourceAsMap().get("lastOccurrenceTime").toString());
+                                }
+                            }
+
+
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+
+
+/**
+ * {
+ *   "_index" : "filebeat-6.5.0-2018.11.22",
+ *   "_type" : "doc",
+ *   "_id" : "Gq-XOmcBOxmke417TvSE",
+ *   "_score" : 9.424807,
+ *   "_source" : {
+ *     "@timestamp" : "2018-11-22T08:44:13.439Z",
+ *     "message" : "컴퓨터 개고수"
+ *   }
+ * }
+ */
+
+
+                /**
+                 * resource 를 적게 사용하는법을 생각해 보자.
+                 */
+//                if (keywords.size() > 0) {
+//
+//                    keywords.forEach(x -> {
+//                        strings.add(x.getKeyword()); // list x 안에 객체가 없으면 안들어와진다.
+////                    log.info("키워드 = " + x.getKeyword());
+//                    });
+//                    log.info(strings.toString());
+//
+//                    /**
+//                     * Call Logic
+//                     */
+//                    SearchRequest searchRequest = buildSearchRequest("_all", null, null);
+//                    String[] includeFields = new String[] {"@timestamp", "message"};
+//                    String[] excludeFields = new String[] {};
+//                    SearchSourceBuilder searchSourceBuilder = buildSearchSourceRequest();
+//                    searchSourceBuilder.fetchSource(includeFields, excludeFields);
+//                    searchSourceBuilder.query(QueryBuilders.termsQuery("message", strings));
+//                    searchRequest.source(searchSourceBuilder);
+//                    try {
+//                        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+//                        log.info(response.status().toString());
+//                        log.info(response.getHits().getTotalHits() + " ~~");
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//
+//
+//                }
+
+
+            }
+        });
+        log.info("==============================1스케쥴 끝==================================");
+
         /**
          * 1. 위 는 hostName 별 keywords 를 조회 해 왔다.
          * //TODO 2. hostName 별(1중 for 문) keywords 에서 keyword 별로(2중 for 문 or termquery 에 여러 내용을 포함하여 쿼리를 날리는걸로) 발생했는지 콜을 하여 검사를 한다.

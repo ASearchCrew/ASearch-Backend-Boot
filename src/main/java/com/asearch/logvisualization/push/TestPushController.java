@@ -31,7 +31,8 @@ public class TestPushController {
         JSONObject body = new JSONObject();
 //        body.put("to", "/topics/" + TOPIC);
 //        body.put("to", "eGf_iPd4Ll4:APA91bEYQ8BvqnmBR29p7sjG2L_0VXgWVS0JJOV0mHKB8uLz20tBg3qIFy-Wg8NiGe0MsXi1vT2WPkLvKLG6-GujYGx62JiEy0ZlkB1naxWsJ7KGk3awlSAhKdTDm17KZ2JNNAFlfjHb");
-        body.put("to", "cZMpnQHA5Ho:APA91bG7gs-SxzCYcN_47NIWQx2jKnLUOYqNjN_lnpHtLVovoct_AySJ4EnBKJLTTr5NUersLOH2MaaBPFosj72y7JbnCJ98DycSKwj2Cy-naey9vvXcrA8c4g_FQaZQmcNWR8HUUgqT");
+//        body.put("to", "cZMpnQHA5Ho:APA91bG7gs-SxzCYcN_47NIWQx2jKnLUOYqNjN_lnpHtLVovoct_AySJ4EnBKJLTTr5NUersLOH2MaaBPFosj72y7JbnCJ98DycSKwj2Cy-naey9vvXcrA8c4g_FQaZQmcNWR8HUUgqT");
+        body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
         body.put("priority", "high");
 
         JSONObject notification = new JSONObject();
@@ -84,8 +85,9 @@ public class TestPushController {
 
         JSONObject body = new JSONObject();
 //        body.put("to", "/topics/" + TOPIC);
-        body.put("to", "eGf_iPd4Ll4:APA91bEYQ8BvqnmBR29p7sjG2L_0VXgWVS0JJOV0mHKB8uLz20tBg3qIFy-Wg8NiGe0MsXi1vT2WPkLvKLG6-GujYGx62JiEy0ZlkB1naxWsJ7KGk3awlSAhKdTDm17KZ2JNNAFlfjHb");
+//        body.put("to", "eGf_iPd4Ll4:APA91bEYQ8BvqnmBR29p7sjG2L_0VXgWVS0JJOV0mHKB8uLz20tBg3qIFy-Wg8NiGe0MsXi1vT2WPkLvKLG6-GujYGx62JiEy0ZlkB1naxWsJ7KGk3awlSAhKdTDm17KZ2JNNAFlfjHb");
 //        body.put("to", "cZMpnQHA5Ho:APA91bG7gs-SxzCYcN_47NIWQx2jKnLUOYqNjN_lnpHtLVovoct_AySJ4EnBKJLTTr5NUersLOH2MaaBPFosj72y7JbnCJ98DycSKwj2Cy-naey9vvXcrA8c4g_FQaZQmcNWR8HUUgqT");
+        body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
         body.put("priority", "high");
 
         JSONObject notification = new JSONObject();

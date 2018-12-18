@@ -93,8 +93,9 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
                                 QueryBuilders.boolQuery()
                                         .must(QueryBuilders.termQuery("message", search))
                                         .filter(QueryBuilders.rangeQuery("@timestamp")
-                                                .from(String.valueOf(Long.parseLong(time)))
-                                                .to(calendar.getTimeInMillis())));
+//                                                .from(String.valueOf(Long.parseLong(time))) //Fixme center 인데 time 이 있다. 확인해보자.
+                                                .from(Long.parseLong(searchTime) - 200000) //Fixme 해당 시간을 계산해서 하루가 안지나야 한다.
+                                                .to(searchTime)));
                         searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
                         searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
                         searchSourceBuilder.size(100);
