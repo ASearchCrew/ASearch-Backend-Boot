@@ -5,7 +5,6 @@ import com.asearch.logvisualization.dto.*;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import com.asearch.logvisualization.exception.InternalServerErrorException;
 import com.asearch.logvisualization.exception.NotFoundException;
-import com.asearch.logvisualization.exception.SuccessRes;
 import com.asearch.logvisualization.push.WebPushNotificationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -35,7 +34,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.asearch.logvisualization.util.Constant.*;
@@ -72,12 +70,22 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                         parameters.clear();
                     }
                     assert updateResponse != null;
-                    if (updateResponse.status() != RestStatus.OK)
+                    if (updateResponse.status() != RestStatus.OK) {
+                        log.info("우영 실패");
                         throw new InternalServerErrorException("DB Malfunction");
-                    else throw new SuccessRes("고쳤당 ^__^ !");
+                    }
+                    else {
+                        log.info("우영 성공");
+                        return 3;
+                    }
 //                    else throw new AlreadyExistsException("Success");//FIXME 이쪽에서 종료되게 해야하는데 어떻게 할지.?
 //                    else return "";
                 });
+        if (String.valueOf(3).equals(res.toString())) {
+            log.info("우영 성공2");
+            return;
+        }
+        log.info("우영 성공3");
         log.info(res.toString());
         log.info(document.get("keywords").toString());
 //        if(res.getClass().toString().equals("String")) return;
@@ -205,12 +213,13 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
                                     log.info("22222222");
                                     //TODO Push Service
+                                    //TODO Get Token
                                     JSONObject body = new JSONObject();
                                     body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
                                     body.put("priority", "high");
                                     JSONObject notification = new JSONObject();
-                                    notification.put("title", "JSA Notification");
-                                    notification.put("body", "Happy Message!");
+                                    notification.put("title", "발생 로그 = ");
+                                    notification.put("body", keyword.getKeyword());
                                     JSONObject data = new JSONObject();
                                     data.put("Key-1", "JSA Data 1");
                                     data.put("Key-2", "JSA Data 2");
@@ -271,12 +280,13 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                         if (diff > Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
                                             log.info("AAA");
                                             //TODO Push Service
+                                            //TODO Get Token
                                             JSONObject body = new JSONObject();
                                             body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
                                             body.put("priority", "high");
                                             JSONObject notification = new JSONObject();
-                                            notification.put("title", "JSA Notification");
-                                            notification.put("body", "Happy Message!");
+                                            notification.put("title", "발생 토큰 = ");
+                                            notification.put("body", keyword.getKeyword());
                                             JSONObject data = new JSONObject();
                                             data.put("Key-1", "JSA Data 1");
                                             data.put("Key-2", "JSA Data 2");

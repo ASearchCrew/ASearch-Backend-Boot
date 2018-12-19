@@ -22,7 +22,7 @@ import java.util.List;
 @AllArgsConstructor
 @Api(description = "로그", tags = {"log"})
 @Slf4j
-@RequestMapping(value = "/api/v1/log", produces = "application/json")
+@RequestMapping(value = "/api/v1/logs", produces = "application/json")
 public class LogController {
 
     private LogService logService;
