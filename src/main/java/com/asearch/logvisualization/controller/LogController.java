@@ -61,10 +61,12 @@ public class LogController {
                                                    @Nullable @RequestParam("initialCount") long initialCount,
                                                    @RequestParam("upScrollOffset") long upScrollOffset,
                                                    @Nullable @RequestParam("id") String id,
-                                                   @Nullable @RequestParam("searchTime") String searchTime) throws Exception {
+                                                   @Nullable @RequestParam("calendarStartTime") String calendarStartTime,
+                                                   @Nullable @RequestParam("calendarEndTime") String calendarEndTime) throws Exception {
+        log.info(calendarEndTime + " End Time");
         log.info("=======================================IN===================================================");
         return new ResponseEntity<>(logService.getRawLogs(direction, hostName, time,
-                search, isStream, initialCount, upScrollOffset, id, searchTime), HttpStatus.OK);
+                search, isStream, initialCount, upScrollOffset, id, calendarStartTime, calendarEndTime), HttpStatus.OK);
     }
 
     @ApiOperation(value = "로그 상세화면 조회", notes = "로그 상세화면을 조회 한다.")

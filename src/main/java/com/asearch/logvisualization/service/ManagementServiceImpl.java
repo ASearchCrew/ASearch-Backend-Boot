@@ -57,6 +57,7 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
             case NO_DATA:
                 Map<String, Object> dataMap = new HashMap<>();
                 dataMap.put("hostIp", serverInfo.getHostIp());
+                dataMap.put("interval", serverInfo.getInterval());
                 status = managementDao.indexServer(
                         buildIndexRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, serverInfo.getHostName(), dataMap));
                 if (status != RestStatus.CREATED) throw new InternalServerErrorException("DB Error");

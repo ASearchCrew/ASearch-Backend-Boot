@@ -1,33 +1,40 @@
 package com.asearch.logvisualization.service;
 
 import com.asearch.logvisualization.dao.AlarmDaoImpl;
-import com.asearch.logvisualization.dto.AlarmKeywordDto;
-import com.asearch.logvisualization.dto.KeywordDto;
-import com.asearch.logvisualization.dto.KeywordListModel;
-import com.asearch.logvisualization.dto.KeywordModel;
+import com.asearch.logvisualization.dto.*;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import com.asearch.logvisualization.exception.InternalServerErrorException;
 import com.asearch.logvisualization.exception.NotFoundException;
+import com.asearch.logvisualization.exception.SuccessRes;
+import com.asearch.logvisualization.push.WebPushNotificationService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.json.JSONObject;
+import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -40,6 +47,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     private AlarmDaoImpl alarmDao;
     private RestHighLevelClient client;
+    private WebPushNotificationService webPushNotificationsService;
 
     @Override
     public void registerAlarmKeyword(AlarmKeywordDto keywordInfo) throws IOException {
@@ -66,7 +74,8 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                     assert updateResponse != null;
                     if (updateResponse.status() != RestStatus.OK)
                         throw new InternalServerErrorException("DB Malfunction");
-                    else throw new AlreadyExistsException("Success");//FIXME 이쪽에서 종료되게 해야하는데 어떻게 할지.?
+                    else throw new SuccessRes("고쳤당 ^__^ !");
+//                    else throw new AlreadyExistsException("Success");//FIXME 이쪽에서 종료되게 해야하는데 어떻게 할지.?
 //                    else return "";
                 });
         log.info(res.toString());
@@ -107,10 +116,10 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                     try {
                         alarmDao.removeKeyword(parameters, buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, keyword.getHostName()), i);
                         //TODO 삭제 성공 확인 하기
-                        throw new NotFoundException("AAAAA");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    break;
                 }
             }
         });
@@ -128,7 +137,10 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         Stream<SearchHit> hitStream = Arrays.stream(searchHits);
         Gson gson = new Gson();
         hitStream.forEach(searchHit -> {
-            keywordListModels.add(new KeywordListModel(searchHit.getId(), new ArrayList<>()));
+            if (searchHit.getSourceAsMap().get("interval") != null)
+                keywordListModels.add(new KeywordListModel(searchHit.getId(), searchHit.getSourceAsMap().get("interval").toString(), new ArrayList<>()));
+            else
+                keywordListModels.add(new KeywordListModel(searchHit.getId(), "none", new ArrayList<>()));
             Type type = new TypeToken<ArrayList<KeywordModel>>(){}.getType();
             if (searchHit.getSourceAsMap().get("keywords") != null) {
                 List<KeywordModel> keywords = gson.fromJson(searchHit.getSourceAsMap().get("keywords").toString(), type);
@@ -150,62 +162,172 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 buildSearchRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, null),
                 buildSearchSourceRequest(), "all", 1000);
 
-//        log.info(Arrays.toString(searchHits));
+        log.info(Arrays.toString(searchHits));
+        log.info("===============1스케쥴 시작=======================");
         Gson gson = new Gson();
         Type type = new TypeToken<ArrayList<KeywordModel>>(){}.getType();
         Stream<SearchHit> hitStream = Arrays.stream(searchHits);
-        hitStream.forEach(searchHit -> {
-            if (searchHit.getSourceAsMap().get("keywords") != null) {
-
+        hitStream.forEach(server -> { // serverList
+            if (server.getSourceAsMap().get("keywords") != null) {
+                log.info("=========새로운 관리 서버 시작=============");
                 //TODO - java8
-                List<KeywordModel> keywords = gson.fromJson(searchHit.getSourceAsMap().get("keywords").toString(), type);
+                List<KeywordModel> keywords = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), type);
                 List<String> strings = new ArrayList<>();
 
                 //todo Parallel
-                if (keywords.size() > 0) {
-                    keywords.forEach(keyword -> {//searchHit.getId()+"*"
-                        SearchRequest searchRequest = buildSearchRequest("_all", null, null);
+                if (keywords.size() > 0) { // keywords 배열
+//                    keywords.forEach(keyword -> {//searchHit.getId()+"*"
+                    int keywordPosition = 0;
+                    for(KeywordModel keyword : keywords) {
+                        log.info("keyword :: {}", keyword.getKeyword());
+                        SearchRequest searchRequest = buildSearchRequest("filebeat*", null, null);
                         String[] includeFields = new String[] {"@timestamp", "message"};
                         String[] excludeFields = new String[] {};
                         SearchSourceBuilder searchSourceBuilder = buildSearchSourceRequest();
                         searchSourceBuilder.fetchSource(includeFields, excludeFields);
 
-                        searchSourceBuilder.query(QueryBuilders.termQuery("message", keyword.getKeyword()));
+                        searchSourceBuilder.query(QueryBuilders.boolQuery()
+                                        .must(QueryBuilders.termQuery("message", keyword.getKeyword())));
+//                        searchSourceBuilder.query(QueryBuilders.termQuery("message", keyword.getKeyword()));
                         searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-                        searchSourceBuilder.size(10);
+//                        searchSourceBuilder.size(10);
                         searchRequest.source(searchSourceBuilder);
 
                         try {
-                            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+                            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT); // keyword response Data
                             log.info(response.status().toString());
                             log.info(response.getHits().getTotalHits() + " ~~");
                             /** =================여기 까지 Request 끝=====================*/
 
-                            /**
-                             * 각 단일 Response 의 @timestamp 가, 기존 keyword 객체에 있는 last_occurrence_time 보다
-                             * 큰 지 (2)(@timestamp > last_occurrence_time) and (1).(last_occurrence_time 이 없다면)를 1차로 검사하고,
-                             *
-                             *   - last_occurrence_time 이 없다면 //TODO push 를 날려야 한다.
-                             *   - @timestamp <= last_occurrence_time 라면 그냥 넘어간다.
-                             *   - @timestamp > last_occurrence_time 라면
-                             *      - ( (@timestamp - last_occurrence_time) > intervalTime) = //TODO push 를 보낸다.
-                             *      - ( (@timestamp - last_occurrence_time) < intervalTime) = 그냥 넘어간다.
-                             */
                             if (response.getHits().getTotalHits() != 0) {
-                                log.info(response.getHits().getHits()[0].toString());
-                                if (response.getHits().getHits()[0].getSourceAsMap().get("lastOccurrenceTime") == null) {
+                                Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
+                                List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
+                                if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
+                                    log.info("22222222");
                                     //TODO Push Service
+                                    JSONObject body = new JSONObject();
+                                    body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
+                                    body.put("priority", "high");
+                                    JSONObject notification = new JSONObject();
+                                    notification.put("title", "JSA Notification");
+                                    notification.put("body", "Happy Message!");
+                                    JSONObject data = new JSONObject();
+                                    data.put("Key-1", "JSA Data 1");
+                                    data.put("Key-2", "JSA Data 2");
+
+                                    body.put("notification", notification);
+                                    body.put("data", data);
+
+                                    HttpEntity<String> request = new HttpEntity<>(body.toString());
+
+                                    CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+                                    CompletableFuture.allOf(pushNotification).join();
+
+                                    //TODO last_occurrence_time 등록.
+                                    Calendar calendar = Calendar.getInstance();
+                                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                                    Date date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
+                                    calendar.setTime(date);
+                                    calendar.getTimeInMillis();
+//                                    log.info(calendar.getTimeInMillis() + " ~"); // 잘됨.
+
+                                    UpdateRequest updateRequest = buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId());
+                                    Map<String, Object> parameters = new HashMap<>();
+                                    Map<String, Object> myObject = new HashMap<>();
+                                    myObject.put("keyword", keyword.getKeyword());
+                                    myObject.put("lastOccurrenceTime", String.valueOf(calendar.getTimeInMillis()));
+                                    parameters.put("keyword", myObject);
+                                    //TODO script 로 lastOccurrenceTime == null 조건문을 줄일 수 있다. 리팩토링 해야 한다.
+                                    String idOrCode = "ctx._source.keywords["+keywordPosition+"] = params.keyword";
+                                    log.info(idOrCode);
+
+                                    Script inline = new Script(ScriptType.INLINE, "painless",
+                                            idOrCode, parameters);
+                                    updateRequest.script(inline);
+                                    UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+                                    //TODO Update 성공확인 할 것
                                 } else {
-                                    log.info(response.getHits().getHits()[0].getSourceAsMap().get("lastOccurrenceTime").toString());
+                                    log.info("3333333333");
+                                    log.info(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
+
+
+                                    Calendar calendar = Calendar.getInstance();
+                                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                                    Date date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
+                                    calendar.setTime(date);
+                                    calendar.getTimeInMillis();
+
+                                    // @timestamp - lastOccurrenceTime
+                                    long diff = calendar.getTimeInMillis()
+                                            - Long.parseLong(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
+                                    log.info(String.valueOf(calendar.getTimeInMillis()));
+                                    log.info(String.valueOf(diff));
+
+
+
+                                    if (calendar.getTimeInMillis() > Long.parseLong(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime())) {
+                                        //@timestamp > last_occurrence_time
+                                        log.info("COME IN");
+                                        if (diff > Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
+                                            log.info("AAA");
+                                            //TODO Push Service
+                                            JSONObject body = new JSONObject();
+                                            body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
+                                            body.put("priority", "high");
+                                            JSONObject notification = new JSONObject();
+                                            notification.put("title", "JSA Notification");
+                                            notification.put("body", "Happy Message!");
+                                            JSONObject data = new JSONObject();
+                                            data.put("Key-1", "JSA Data 1");
+                                            data.put("Key-2", "JSA Data 2");
+
+                                            body.put("notification", notification);
+                                            body.put("data", data);
+
+                                            HttpEntity<String> request = new HttpEntity<>(body.toString());
+
+                                            CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+                                            CompletableFuture.allOf(pushNotification).join();
+
+                                            //TODO last_occurrence_time 업데이트.
+                                            Calendar calendar1 = Calendar.getInstance();
+                                            SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                                            Date date1 = dateFormat1.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
+                                            calendar1.setTime(date1);
+                                            calendar1.getTimeInMillis();
+
+                                            UpdateRequest updateRequest = buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId());
+                                            Map<String, Object> parameters = new HashMap<>();
+                                            Map<String, Object> myObject = new HashMap<>();
+                                            myObject.put("keyword", keyword.getKeyword());
+                                            myObject.put("lastOccurrenceTime", String.valueOf(calendar.getTimeInMillis()));
+//                                            myObject.put("lastOccurrenceTime", "AAAAA");
+                                            parameters.put("keyword", myObject);
+                                            //TODO script 로 lastOccurrenceTime == null 조건문을 줄일 수 있다. 리팩토링 해야 한다.
+                                            String idOrCode = "ctx._source.keywords["+keywordPosition+"] = params.keyword";
+                                            log.info(idOrCode);
+
+                                            Script inline = new Script(ScriptType.INLINE, "painless",
+                                                    idOrCode, parameters);
+                                            updateRequest.script(inline);
+                                            UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
+                                        } else if (diff < Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
+                                            // 그냥 넘어 간다.
+                                        } else {
+                                            //TODO Exception
+                                        }
+                                    } else {
+                                        //@timestamp <= last_occurrence_time
+                                        log.info("TEST");
+                                    }
                                 }
                             }
 
-
-
-                        } catch (IOException e) {
+                        } catch (IOException | ParseException e) {
                             e.printStackTrace();
                         }
-                    });
+                        keywordPosition ++;
+                    }
                 }
 
 
@@ -259,24 +381,5 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
             }
         });
         log.info("==============================1스케쥴 끝==================================");
-
-        /**
-         * 1. 위 는 hostName 별 keywords 를 조회 해 왔다.
-         * //TODO 2. hostName 별(1중 for 문) keywords 에서 keyword 별로(2중 for 문 or termquery 에 여러 내용을 포함하여 쿼리를 날리는걸로) 발생했는지 콜을 하여 검사를 한다.
-         * //TODO 2.1 발생 한 시간을 last_occurrence_time 에 등록 한다.
-         * //TODO 2.2 해당 keyword log 가 last_occurrence_time 보다 최근 시간에 발생 했다면, last_occurrence_time 을 update 하고, 알람을 또 보낸다.
-         * 위의 2 ~ 2.2 까지는 keyword log 발생시 push 를 1번만 보내는 logic 이다.
-         * 아래는 3 ~ 는 keyword log 발생시 push 를 해당 로그가 발생 하지 않을 때까지 주기적으로 push 를 보내는 logic 이다. //
-         *  발생이 언제하고 언제 안할지 모르고 확정적이지 않으므로, keyword log 재발생 시간의 시간적 제약(2분 or 3분 interval)을
-         *  두어서 제약 시간 이내에 로그 발생시 다시 push 를 전송 하는 logic 으로 만들어 본다.
-         *    -- 그렇다면 last_occurrence_time 과 로그 제약시간의 차를 구하여, 제약시간 보다 적다면 push 를 다시 보내는데,
-         *      --> 생각보니까 그냥 발생할때마다 보내면 되려나?
-         *  발생한 로그들의 갯수를 구해서 count 를 추가 해 보자.
-         *
-         *  ====
-         *  마지막 발생 시간과, interval 시간 차이의 시간에는 발생하면 시간을 보내지 않는다. 마지막 발생 시간과, + 1시간 (interval 이 필요 없는..?)
-         */
-
-
     }
 }

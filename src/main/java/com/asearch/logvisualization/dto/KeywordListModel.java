@@ -10,10 +10,12 @@ import java.util.List;
 public class KeywordListModel {
 
     private String hostName;
+    @Nullable private String interval;
     @Nullable private List<KeywordModel> keywords;
 
-    public KeywordListModel(String hostName, List<KeywordModel> keywords) {
+    public KeywordListModel(String hostName, String interval, List<KeywordModel> keywords) {
         this.hostName = hostName;
+        this.interval = interval;
         this.keywords = keywords;
     }
 }

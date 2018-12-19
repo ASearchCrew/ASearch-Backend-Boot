@@ -10,4 +10,5 @@ public class RegisterServerModel {
 
     private String hostIp;
     private String hostName;
+    private String interval;
 }

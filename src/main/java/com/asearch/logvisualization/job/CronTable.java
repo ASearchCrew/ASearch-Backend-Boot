@@ -22,8 +22,7 @@ public class CronTable {
      *   -
      */
     @Scheduled(cron = "*/10 * * * * *")
-    public String aJob() throws IOException {
+    public void job() throws IOException {
         alarmService.detectKeyword();
-        return "ABC";
     }
 }

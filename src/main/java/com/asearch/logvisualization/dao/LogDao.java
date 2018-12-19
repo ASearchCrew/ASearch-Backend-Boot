@@ -19,7 +19,8 @@ public interface LogDao {
                            long initialCount,
                            long upScrollOffset,
                            @Nullable String id,
-                           @Nullable String searchTime) throws IOException;
+                           @Nullable String calendarStartTime,
+                           @Nullable String calendarEndTime) throws IOException;
 
     SearchResponse getDocumentDetail(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String id) throws IOException;
 

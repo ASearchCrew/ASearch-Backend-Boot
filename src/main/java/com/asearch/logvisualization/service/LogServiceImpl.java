@@ -43,7 +43,8 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                                  long initialCount,
                                  long upScrollOffset,
                                  String id,
-                                 String searchTime) throws IOException, ParseException {
+                                 String calendarStartTime,
+                                 String calendarEndTime) throws IOException, ParseException {
         //TODO searchTime 추가하기.
         /**
          *  Dao 에 DataAccess 를 요청한다.
@@ -59,7 +60,8 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                 initialCount,
                 upScrollOffset,
                 id,
-                searchTime);
+                calendarStartTime,
+                calendarEndTime);
 
         log.info("");
         log.info("총 Count = {}" , response.getHits().getTotalHits());
@@ -94,7 +96,7 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
             calendar.setTime(date);
 //            log.info("밀리세컨 : {} ", calendar.getTimeInMillis());
             log.info("id = {}",hit.getId());
-//            log.info(hit.getSourceAsMap().get("message").toString());
+            log.info(hit.getSourceAsMap().get("@timestamp").toString());
             logList.add(new LogModel(hit.getId(), hit.getSourceAsMap().get("@timestamp").toString(), hit.getSourceAsMap().get("message").toString()));
         }
         infoDto.setLogs(logList);

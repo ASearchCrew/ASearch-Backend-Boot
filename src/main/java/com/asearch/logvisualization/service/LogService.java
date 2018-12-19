@@ -16,7 +16,8 @@ public interface LogService {
                           long initialCount,
                           long upScrollOffset,
                           @Nullable String id,
-                          @Nullable String searchTime) throws IOException, ParseException;
+                          @Nullable String calendarStartTime,
+                          @Nullable String calendarEndTime) throws IOException, ParseException;
 
 
     String getDocument(String id) throws IOException;
