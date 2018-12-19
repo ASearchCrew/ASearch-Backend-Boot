@@ -130,8 +130,8 @@ public class ManagementController {
     })
     @CrossOrigin
     @GetMapping("/logcount/hour/minute") //
-    public ResponseEntity<LogCountBySecondsModel> getLogCountBySeconds(@RequestParam(value = "endTime", required = false) String endTime) throws IOException {
-    	ResponseEntity<LogCountBySecondsModel> rs = new ResponseEntity<LogCountBySecondsModel>(managementService.getLogCountBySeconds(endTime), HttpStatus.OK);
+    public ResponseEntity<LogCountBySecondsModel> getLogCountBySeconds() throws IOException {
+    	ResponseEntity<LogCountBySecondsModel> rs = new ResponseEntity<LogCountBySecondsModel>(managementService.getLogCountBySeconds(), HttpStatus.OK);
         return rs;
     }
 }

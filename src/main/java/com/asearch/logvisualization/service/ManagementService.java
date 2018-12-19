@@ -35,7 +35,7 @@ public interface ManagementService {
 	void deleteServerToMonitor(String hostIp)  throws IOException;
 	
 
-	LogCountBySecondsModel getLogCountBySeconds(String endTime) throws IOException;
+	LogCountBySecondsModel getLogCountBySeconds() throws IOException;
 	
 //>>>>>>> is-11-configure
 }
