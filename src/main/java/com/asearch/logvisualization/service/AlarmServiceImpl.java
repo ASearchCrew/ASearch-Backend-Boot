@@ -188,9 +188,11 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 //todo Parallel
                 if (keywords.size() > 0) { // keywords 배열
 //                    keywords.forEach(keyword -> {//searchHit.getId()+"*"
+
                     int keywordPosition = 0;
+
                     for(KeywordModel keyword : keywords) {
-                        log.info("keyword :: {}", keyword.getKeyword());
+//                        log.info("keyword :: {}", keyword.getKeyword());
 //                        SearchRequest searchRequest = buildSearchRequest("filebeat*", null, null);
                         SearchRequest searchRequest = buildSearchRequest(server.getId()+"*", null, null);
                         String[] includeFields = new String[] {"@timestamp", "message"};
@@ -207,46 +209,49 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
                         try {
                             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT); // keyword response Data
-                            log.info(response.status().toString());
+//                            log.info(response.status().toString());
                             log.info(response.getHits().getTotalHits() + " ~~");
                             /** =================여기 까지 Request 끝=====================*/
 
                             if (response.getHits().getTotalHits() != 0) {
                                 Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
                                 List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
+                                // 이 키워드를 처음만들면 발생시간이 없어서 null 이 된다.
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
+                                    log.info(keyword.getKeyword());
+                                    log.info(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                     //TODO Push Service -- Topic 으로 바꾸자.
                                     //TODO Get Token
-                                    SearchRequest searchRequestToken = buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null);
-                                    SearchSourceBuilder searchSourceBuilderToken = buildSearchSourceRequest();
-                                    searchSourceBuilderToken.query(QueryBuilders.matchAllQuery());
-                                    searchRequestToken.source(searchSourceBuilderToken);
-                                    SearchResponse searchResponse = client.search(searchRequestToken, RequestOptions.DEFAULT);
-
-                                    searchResponse.getHits().forEach(item -> {
-//                                        item.getSourceAsMap().get("token").toString();
-                                        JSONObject body = new JSONObject();
-                                        body.put("to", item.getSourceAsMap().get("token").toString());
-                                        body.put("priority", "high");
-                                        JSONObject notification = new JSONObject();
-                                        notification.put("title", "Log = ");
-                                        notification.put("body", keyword.getKeyword());
-                                        JSONObject data = new JSONObject();
-                                        data.put("Key-1", "JSA Data 1");
-                                        data.put("Key-2", "JSA Data 2");
-
-                                        body.put("notification", notification);
-                                        body.put("data", data);
-
-                                        HttpEntity<String> request = new HttpEntity<>(body.toString());
-
-                                        CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
-                                        CompletableFuture.allOf(pushNotification).join();
-                                    });
-
+//                                    SearchRequest searchRequestToken = buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null);
+//                                    SearchSourceBuilder searchSourceBuilderToken = buildSearchSourceRequest();
+//                                    searchSourceBuilderToken.query(QueryBuilders.matchAllQuery());
+//                                    searchRequestToken.source(searchSourceBuilderToken);
+//                                    SearchResponse searchResponse = client.search(searchRequestToken, RequestOptions.DEFAULT);
+//
+//                                    searchResponse.getHits().forEach(item -> {
+////                                        item.getSourceAsMap().get("token").toString();
+//                                        JSONObject body = new JSONObject();
+//                                        body.put("to", item.getSourceAsMap().get("token").toString());
+//                                        body.put("priority", "high");
+//                                        JSONObject notification = new JSONObject();
+//                                        notification.put("title", "Log = ");
+//                                        notification.put("body", keyword.getKeyword());
+//                                        JSONObject data = new JSONObject();
+//                                        data.put("Key-1", "JSA Data 1");
+//                                        data.put("Key-2", "JSA Data 2");
+//
+//                                        body.put("notification", notification);
+//                                        body.put("data", data);
+//
+//                                        HttpEntity<String> request = new HttpEntity<>(body.toString());
+//
+//                                        CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+//                                        CompletableFuture.allOf(pushNotification).join();
+//                                    });
+                                    //TODO Line
 
 //                                    JSONObject body = new JSONObject();
 //                                    body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
