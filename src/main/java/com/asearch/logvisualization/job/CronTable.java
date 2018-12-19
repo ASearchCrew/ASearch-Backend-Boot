@@ -21,7 +21,7 @@ public class CronTable {
      * 3. 그 키워드들이 관찰 서버가 가지고 있는지 searching 을 한다.
      *   -
      */
-    @Scheduled(cron = "*/10 * * * * *")
+//    @Scheduled(cron = "*/10 * * * * *")
     public void job() throws IOException {
         alarmService.detectKeyword();
     }
