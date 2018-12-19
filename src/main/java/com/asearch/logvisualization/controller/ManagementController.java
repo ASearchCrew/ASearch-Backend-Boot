@@ -1,21 +1,34 @@
 package com.asearch.logvisualization.controller;
 
+
 import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.dto.ServerListDto;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.asearch.logvisualization.dto.LogCountBySecondsModel;
 import com.asearch.logvisualization.service.ManagementService;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
 
 @Slf4j
 @Api(description = "관리", tags = {"management"})
@@ -34,7 +47,8 @@ public class ManagementController {
     @CrossOrigin
     @PutMapping("/filebeat/conf")
     public ResponseEntity modifyFilebeatConfiguration(@RequestParam(value = "path", required = true) String path) throws Exception{
-        //managementService.modifyFilebeatConf(path);
+        System.out.println(path);
+    	managementService.modifyFilebeatConf(path);
         return new ResponseEntity(HttpStatus.OK);
     }
     @ApiOperation(value = "모니터링 할 서버 등록", notes = "모니터링 할 서버를 등록한다.")
@@ -49,25 +63,14 @@ public class ManagementController {
         managementService.registerServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
-
-    @ApiOperation(value = "모니터링 할 서버 리스트 조회", notes = "모니터링 할 서버 리스트를 조회 한다.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-    })
-    @CrossOrigin
-    @GetMapping("/server/list") // monitoring/server
-    public ResponseEntity<List<ServerListDto>> getServerListToMonitor() throws IOException {
-        return new ResponseEntity<>(managementService.getServerListToMonitor(), HttpStatus.OK);
-    }
-
     
-    @ApiOperation(value = "서버별 로그갯수 출력", notes = "서버별로 로그갯수 출력.")
+    @ApiOperation(value = "서버별 시간확인", notes = "서버별 시간확인.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "Not Found")
     })
     @CrossOrigin
-    @GetMapping("/logcount")
+    @GetMapping("/servertime")
     public ResponseEntity<List<HashMap<String, Object>>> getLogCountList() throws Exception{
     	ResponseEntity<List<HashMap<String, Object>>> rs = new ResponseEntity<List<HashMap<String, Object>>>(managementService.getLogCountList(), HttpStatus.OK);
         return rs;
@@ -91,9 +94,44 @@ public class ManagementController {
             @ApiResponse(code = 404, message = "Not Found")
     })
     @CrossOrigin
-    @GetMapping("/server") // monitoring/server
+    @GetMapping("/serverlist") // monitoring/server
     public ResponseEntity<List<Object>> getServerList() throws IOException {
         ResponseEntity<List<Object>> rs = new ResponseEntity<List<Object>>(managementService.getServerList(), HttpStatus.OK);
+        return rs;
+    }
+    
+    @ApiOperation(value = "키워드별 로그갯수 출력", notes = "키워드별 로그갯수 출력.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/keywordcount")
+    public ResponseEntity<List<HashMap<String, Object>>> getKeywordCountList(@RequestParam(value = "hostName", required = true) String hostName) throws Exception{
+        return new ResponseEntity<List<HashMap<String, Object>>>(managementService.getKeywordCountList(hostName), HttpStatus.OK);
+    }
+    
+    @ApiOperation(value = "모니터링 할 서버 삭제", notes = "모니터링 할 서버를 삭제한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @DeleteMapping("/deleteserver") //
+    public ResponseEntity deleteServerToMonitor(@RequestParam(value = "hostIp", required = true) String hostIp) throws IOException {
+    	managementService.deleteServerToMonitor(hostIp);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+    
+    @ApiOperation(value = "초별 로그갯수 조회", notes = "초별 로그갯수 조회.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @CrossOrigin
+    @GetMapping("/logcount/hour/minute") //
+    public ResponseEntity<LogCountBySecondsModel> getLogCountBySeconds() throws IOException {
+    	ResponseEntity<LogCountBySecondsModel> rs = new ResponseEntity<LogCountBySecondsModel>(managementService.getLogCountBySeconds(), HttpStatus.OK);
         return rs;
     }
 }

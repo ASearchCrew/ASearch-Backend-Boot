@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+
 public interface ManagementService {
 
     void modifyFilebeatConf(String path) throws Exception;
@@ -24,5 +26,16 @@ public interface ManagementService {
 	List<Object> getServerList() throws IOException;
 
 
-    List<ServerListDto> getServerListToMonitor() throws IOException;
+//<<<<<<< HEAD
+//    List<ServerListDto> getServerListToMonitor() throws IOException;
+//=======
+	List<HashMap<String, Object>> getKeywordCountList(String hostName) throws IOException;
+
+
+	void deleteServerToMonitor(String hostIp)  throws IOException;
+	
+
+	LogCountBySecondsModel getLogCountBySeconds() throws IOException;
+	
+//>>>>>>> is-11-configure
 }

@@ -22,11 +22,33 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import static com.asearch.logvisualization.util.Constant.*;
+
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.FieldSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.stereotype.Service;
+
+import com.asearch.logvisualization.dto.LogCountByMinutesModel;
+import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+import com.asearch.logvisualization.exception.AlreadyExistsException;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
 @Service
@@ -36,14 +58,16 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
     private ManagementDao managementDao;
     private RestHighLevelClient client;
 
+    //private AlarmService alarmService;
+    private IndexCacheService indexCacheService;
+    
     @Override
-    public void modifyFilebeatConf(String path) throws Exception {
-        int PORT = 8080;
-        Socket socket = new Socket("192.168.157.128", PORT);
-
-        OutputStream stream = socket.getOutputStream();
-        stream.write(path.getBytes());
-        socket.close();
+    public void modifyFilebeatConf(String path) throws Exception{
+    	Socket socket = new Socket("192.168.157.128", 9001);
+    	
+    	OutputStream stream = socket.getOutputStream();
+		stream.write(path.getBytes());
+		socket.close();
     }
 
     @Override
@@ -70,174 +94,285 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
     }
 
 
-    @Override
-    public List<HashMap<String, Object>> getLogCountList() throws Exception {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
-        String index = "filebeat-6.5.0-" + simpleDateFormat.format(new Date());
-        List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-        List<Object> serverList = getServerList();
-        for (int i = 0; i < serverList.size(); i++) {
-            HashMap<String, Object> convert = (HashMap<String, Object>) serverList.get(i);
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.size(1);
-            searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
-            searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+	@Override
+	public List<HashMap<String, Object>> getLogCountList() throws Exception{
+		Date date = new Date();
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+		List<Object> serverList = getServerList();
 
-            SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+		List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
 
-            SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+		for(int i = 0; i < serverList.size(); i++) {
+			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
+			HashMap<String, Object> putData = new HashMap<String, Object>();
 
-            if (response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
-                HashMap<String, Object> putData = new HashMap<String, Object>();
-                putData.put("timestamp", "Exception");
-                putData.put("lasttime", -1);
-                putData.put("server", convert.get("host_ip"));
+			for(int j = 0; j < nowIndexList.size(); j++) {
+				String index = nowIndexList.get(j);
 
-                result.add(putData);
+				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+				searchSourceBuilder.size(1);
+				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
+				searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
 
-                //이곳에서 다시 쿼리문 작성? try catch를 없애버리고 throws로 처리해버리자.
-                //
-    			/*searchSourceBuilder = new SearchSourceBuilder();
+				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 
-					searchSourceBuilder.size(1);
-					searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", serverList[i]));
-					searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-					SearchRequest reSearchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
-					// 이곳에서 다시 쿼리를 받아온다.
+				if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
+					Object lastTime = putData.get("lastTime");
 
-					if(response.getHits().getTotalHits() == 0) {
-						putData.put("timestamp", "Exception");
-						putData.put("lasttime", 24);
-						putData.put("server", serverName);
+					if(lastTime == null) {
+						putData.put("timeStamp", "Exception");
+						putData.put("lastTime", 9999);
+						putData.put("hostIp", convert.get("hostIp"));
+						putData.put("hostName", convert.get("hostName"));
+					}
+
+					result.add(putData);
+				}else {
+					Object lastTime = putData.get("lastTime");
+
+					response.getHits().forEach(item -> {
+						ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
+
+						String timezone = utcDateTime.toString();
+						String logTime = item.getSourceAsMap().get("@timestamp").toString();
+						int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
+						int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
+						int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
+						int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
+						int resultHour = nowHour - logHour;
+
+						if(nowMinute - logMinute < 0) {
+							if(resultHour > 0) {
+								resultHour -= 1;
+							}
+						}
+						//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
+
+						if(lastTime != null) {
+							if((int)lastTime >= resultHour) {
+								putData.put("timeStamp", logTime);
+								putData.put("lastTime", resultHour);
+								putData.put("hostIp", convert.get("hostIp"));
+								putData.put("hostName", convert.get("hostName"));
+							}
+						}else {
+							putData.put("timeStamp", logTime);
+							putData.put("lastTime", resultHour);
+							putData.put("hostIp", convert.get("hostIp"));
+							putData.put("hostName", convert.get("hostName"));
+						}
 
 						result.add(putData);
-					}else {
-						//이곳에서 timestamp 다시 정의해줘서 보내준다.
-						//시간도 계산해서 보내줘야함.
-						//현재시간과 과거 데이터 시간.
-						//현재시간이 01시. 과거시간이 23시면...
-						//2시간차이.
-						//정확한 계산이 힘들다
+					});
+				}
+			}
 
-						putData.put("timestamp", "Exception");
-						putData.put("lasttime", 24);
-						putData.put("server", serverName);
+		}
 
-						result.add(putData);
-					}*/
-            } else {
-                response.getHits().forEach(item -> {
-                    //System.out.println(item.getSourceAsMap().get("@timestamp").toString());
-                    ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
+		return result;
+	}
 
-                    String timezone = utcDateTime.toString();
-                    String logTime = item.getSourceAsMap().get("@timestamp").toString();
-                    int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
-                    int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
-                    int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
-                    int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
-                    int resultHour = nowHour - logHour;
+	@Override
+	public List<HashMap<String, Object>> getDateCountList() throws Exception {
+		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		Calendar calendar = Calendar.getInstance();
+		Date date = new Date();
+		List<Object> serverList = getServerList();
 
-                    if (nowMinute - logMinute < 0) {
-                        if (resultHour > 0) {
-                            resultHour -= 1;
-                        }
-                    }
-                    //String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
+		for(int i = 0; i < serverList.size(); i++) {
+			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
+			HashMap<String, Object> answer = new HashMap<String, Object>();
+			List<HashMap<String, Object>> tempList = new ArrayList<HashMap<String, Object>>();
 
-                    HashMap<String, Object> putData = new HashMap<String, Object>();
-                    putData.put("timestamp", logTime);
-                    putData.put("lasttime", resultHour);
-                    putData.put("server", convert.get("host_ip"));
+			answer.put("hostIp", convert.get("hostIp"));
+			answer.put("hostName", convert.get("hostName"));
 
-                    result.add(putData);
-                });
-            }
-            //만약 오늘날짜 로그가 존재하지 않는다면, 이전날짜의 마지막 로그를 불러와서 보여준다.
-            //이전날짜 로그마저 존재하지 않는다면 error처리로 보낸다.
-            //이전날짜 시간처리도 생각해야한다.
-        }
+			for(int j = 9; j >= 0; j--) {
+				calendar.setTime(date);
+				calendar.add(Calendar.DATE, -j);
 
-        return result;
-    }
+				String nowDate = simpleDateFormat.format(calendar.getTime()).toString();
+				List<String> nowIndexList = indexCacheService.getIndexList().get(nowDate);
+				HashMap<String, Object> innerValue = new HashMap<String, Object>();
+				innerValue.put("date", nowDate);
+				tempList.add(innerValue);
 
-    @Override
-    public List<HashMap<String, Object>> getDateCountList() throws Exception {
-        List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
-        Calendar calendar = Calendar.getInstance();
-        Date date = new Date();
+				for(int k = 0; k < nowIndexList.size(); k++) {
+					String index = nowIndexList.get(k);
+					SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+					searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
 
-        List<Object> serverList = getServerList();
+					SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 
-        for (int i = 0; i < serverList.size(); i++) {
-            HashMap<String, Object> convert = (HashMap<String, Object>) serverList.get(i);
-            HashMap<String, Object> answer = new HashMap<String, Object>();
-            List<HashMap<String, Object>> tempList = new ArrayList<HashMap<String, Object>>();
+					try {
+						long count = client.search(searchRequest, RequestOptions.DEFAULT).getHits().getTotalHits();
+						Object tempValue = innerValue.get("count");
 
-            answer.put("server", convert.get("host_ip"));
+						if(tempValue == null) {
+							innerValue.put("count", count);
+						}else {
+							innerValue.put("count", (long)tempValue+count);
+						}
+					}catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			answer.put("chartDatas", tempList);
+			result.add(answer);
+		}
 
-            for (int j = 0; j < 10; j++) {
-                calendar.setTime(date);
-                calendar.add(Calendar.DATE, -j);
-                String index = "filebeat-6.5.0-" + simpleDateFormat.format(calendar.getTime());
+		return result;
+	}
 
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-                searchSourceBuilder.query(QueryBuilders.matchQuery("beat.hostname", convert.get("host_name")));
+	@Override
+	public List<Object> getServerList() throws IOException {
+		List<Object> result = new ArrayList<Object>();
 
-                SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+		SearchRequest searchRequest = new SearchRequest("server-info").types("info").source(searchSourceBuilder);
+		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-                try {
-                    long count = client.search(searchRequest, RequestOptions.DEFAULT).getHits().getTotalHits();
-                    HashMap<String, Object> temp = new HashMap<String, Object>();
+		response.getHits().forEach(item -> {
+			HashMap<String, Object> innerTemp = new HashMap<String, Object>();
+			innerTemp.put("hostIp", item.getSourceAsMap().get("hostIp").toString());
+			innerTemp.put("hostName", item.getId());
+			result.add(innerTemp);
+		});
 
-                    temp.put("date", simpleDateFormat.format(calendar.getTime()));
-                    temp.put("count", count);
-                    tempList.add(temp);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            answer.put("chartDatas", tempList);
-            result.add(answer);
-        }
+		return result;
+	}
 
-        return result;
-    }
+	@Override
+	public List<HashMap<String, Object>> getKeywordCountList(String hostName) throws IOException {
+		List<HashMap<String, Object>> realResult = new ArrayList<HashMap<String, Object>>();
 
-    @Override
-    public List<Object> getServerList() throws IOException {
-        List<Object> result = new ArrayList<Object>();
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		Calendar calendar = Calendar.getInstance();
+		Date date = new Date();
 
-        SearchRequest searchRequest = new SearchRequest(MANAGEMENT_SERVER_INDEX);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-        searchRequest.source(searchSourceBuilder);
-        SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchQuery("_id", hostName));
+		SearchRequest searchRequest = new SearchRequest("server-info").types("info").source(searchSourceBuilder);
 
-        response.getHits().forEach(item -> {
-            HashMap<String, Object> innerTemp = new HashMap<String, Object>();
-            innerTemp.put("hostIp", item.getSourceAsMap().get("hostIp").toString());
-            innerTemp.put("hostName", item.getId());
-            result.add(innerTemp);
-        });
+		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-        return result;
-    }
+		response.getHits().forEach(item -> {
+			String resultHostName = item.getId();
+			List<HashMap<String, Object>> resultKeywordList = (List<HashMap<String, Object>>) item.getSourceAsMap().get("keywords");
 
-    @Override
-    public List<ServerListDto> getServerListToMonitor() throws IOException {
-        List<ServerListDto> models = new ArrayList<>();
-        managementDao.getServerList(buildSearchRequest(MANAGEMENT_SERVER_INDEX, null, null), buildSearchSourceRequest())
-                .getHits()  //x.getId(), x.getSourceAsMap().get("hostIp")
-                .forEach(x -> {
-                    models.add(ServerListDto
-                            .builder()
-                            .hostIp(x.getSourceAsMap().get("hostIp").toString())
-                            .hostName(x.getId())
-                            .build());
-                });
-        return models;
-    }
+			for(int j = 9; j >= 0; j--) {
+				calendar.setTime(date);
+				calendar.add(Calendar.DATE, -j);
+
+				if(resultKeywordList == null) {
+					HashMap<String, Object> contents = new HashMap<String, Object>();
+					contents.put("date", simpleDateFormat.format(calendar.getTime()));
+				}else {
+					HashMap<String, Object> contents = new HashMap<String, Object>();
+					contents.put("date", simpleDateFormat.format(calendar.getTime()));
+
+					realResult.add(contents);
+
+					for(int i = 0; i < resultKeywordList.size(); i++) {
+						String resultKeyword = resultKeywordList.get(i).get("keyword").toString();
+						List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(calendar.getTime()).toString());
+
+						for(int k = 0; k < nowIndexList.size(); k++) {
+							String index = nowIndexList.get(k);
+
+							SearchSourceBuilder searchSourceBuilder1 = new SearchSourceBuilder();
+							searchSourceBuilder1.query(QueryBuilders.matchQuery("beat.name", resultHostName));
+							searchSourceBuilder1.query(QueryBuilders.matchQuery("message", resultKeyword));
+							SearchRequest searchRequest1 = new SearchRequest(index).types("doc").source(searchSourceBuilder1);
+
+							try {
+								SearchResponse response1 = client.search(searchRequest1, RequestOptions.DEFAULT);
+								Object tempValue = contents.get("resultKeyword");
+
+								if(tempValue == null) {
+									contents.put(resultKeyword, (long)response1.getHits().getTotalHits());
+								}else {
+									contents.put(resultKeyword, (long)tempValue+(long)response1.getHits().getTotalHits());
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		});
+
+		return realResult;
+	}
+
+	@Override
+	public void deleteServerToMonitor(String hostIp) throws IOException {
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchQuery("host_ip", hostIp));
+		SearchRequest searchRequest = new SearchRequest("server").types("doc").source(searchSourceBuilder);
+
+		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+		response.getHits().forEach(item -> {
+			DeleteRequest deleteRequest = new DeleteRequest("server", "doc", item.getId());
+			try {
+				DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+
+		//DeleteRequest deleteRequest = new DeleteRequest("server", "doc", hostIp);
+		//DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
+
+	}
+
+	@Override
+	public LogCountBySecondsModel getLogCountBySeconds() throws IOException {
+		Date date = new Date();
+		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+		LogCountBySecondsModel logCountBySecondsModel = new LogCountBySecondsModel();
+		List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
+
+		Instant instant = Instant.now();
+		ZoneId zoneId = ZoneId.of("UTC");
+		ZonedDateTime nowTime = ZonedDateTime.ofInstant(instant, zoneId);
+		String endString = nowTime.toString().split(":")[0]+":"+nowTime.toString().split(":")[1]+":00.000Z";
+		ZonedDateTime endTime = ZonedDateTime.parse(endString);
+
+		int minusMinute = 1;
+
+		ZonedDateTime startTime;
+		for(int i = 1; i < 61; i++) {
+			startTime = endTime.minusMinutes(minusMinute);
+
+			LogCountByMinutesModel logCountByMinutesModel = new LogCountByMinutesModel();
+			logCountByMinutesModel.setStartTime(startTime.toString());
+			logCountByMinutesModel.setEndTime(endTime.toString());
+
+			for(int j = 0; j < nowIndexList.size(); j++) {
+				String index = nowIndexList.get(j);
+
+				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+				searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
+				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+
+				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+				logCountByMinutesModel.setLogCount(logCountByMinutesModel.getLogCount()+response.getHits().getTotalHits());
+			}
+
+			endTime = startTime;
+			logCountBySecondsModel.getCharDatas().add(logCountByMinutesModel);
+		}
+
+		return logCountBySecondsModel;
+	}
 }
