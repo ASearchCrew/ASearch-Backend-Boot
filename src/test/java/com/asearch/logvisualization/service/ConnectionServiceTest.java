@@ -51,39 +51,39 @@ public class ConnectionServiceTest {
     }
 
 
-    @Test
-    public void 스크롤_GET() throws IOException {
-
-        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L)); // 1L 는 10개 씩?
-        SearchRequest searchRequest = new SearchRequest("filebeat*");
-        searchRequest.scroll(scroll);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-        searchRequest.source(searchSourceBuilder);
-
-        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-        System.out.println(searchResponse.getHits().getTotalHits());
-        String scrollId = searchResponse.getScrollId();
-        System.out.println("첫번째 : " + scrollId);
-        SearchHit[] searchHits = searchResponse.getHits().getHits();
-
-        int count = 0;
-        while (searchHits != null && searchHits.length > 0) {
-            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-            scrollRequest.scroll(scroll);
-            searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
-//            System.out.println(searchResponse.getHits().getTotalHits());
-            scrollId = searchResponse.getScrollId();
-//            System.out.println(scrollId);
-            searchHits = searchResponse.getHits().getHits();
-            count++;
-            System.out.println(count);
-        }
-        System.out.println(count);
-        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-        clearScrollRequest.addScrollId(scrollId);
-        ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
-        boolean succeeded = clearScrollResponse.isSucceeded();
-    }
+//    @Test
+//    public void 스크롤_GET() throws IOException {
+//
+//        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(1L)); // 1L 는 10개 씩?
+//        SearchRequest searchRequest = new SearchRequest("filebeat*");
+//        searchRequest.scroll(scroll);
+//        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+//        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+//        searchRequest.source(searchSourceBuilder);
+//
+//        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+//        System.out.println(searchResponse.getHits().getTotalHits());
+//        String scrollId = searchResponse.getScrollId();
+//        System.out.println("첫번째 : " + scrollId);
+//        SearchHit[] searchHits = searchResponse.getHits().getHits();
+//
+//        int count = 0;
+//        while (searchHits != null && searchHits.length > 0) {
+//            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+//            scrollRequest.scroll(scroll);
+//            searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+////            System.out.println(searchResponse.getHits().getTotalHits());
+//            scrollId = searchResponse.getScrollId();
+////            System.out.println(scrollId);
+//            searchHits = searchResponse.getHits().getHits();
+//            count++;
+//            System.out.println(count);
+//        }
+//        System.out.println(count);
+//        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+//        clearScrollRequest.addScrollId(scrollId);
+//        ClearScrollResponse clearScrollResponse = client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+//        boolean succeeded = clearScrollResponse.isSucceeded();
+//    }
 
 }

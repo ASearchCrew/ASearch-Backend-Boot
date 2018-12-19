@@ -29,7 +29,7 @@ public class IndexCacheJob {
 	private RestHighLevelClient client;
 	private IndexCacheService indexCacheService;
 	
-	@Scheduled(fixedDelay=30000)
+	@Scheduled(fixedDelay=3000000)
 	public void aJob() throws IOException {		
 		GetIndexRequest request = new GetIndexRequest().indices("_all"); 
     	request.includeDefaults(true); 
