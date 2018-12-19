@@ -115,19 +115,20 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         Stream<SearchHit> hitStream = Arrays.stream(searchHits);
         hitStream.forEach(x -> {
             Gson gson = new Gson();
-            Type type = new TypeToken<ArrayList<KeywordModel>>() {
-            }.getType();
-            ArrayList<KeywordModel> arrayList = gson.fromJson(x.getSourceAsMap().get("keywords").toString(), type);
-            Map<String, Object> parameters = new HashMap<>();
-            for (int i = 0; i < arrayList.size(); i++) {
-                if (arrayList.get(i).getKeyword().equals(keyword.getKeyword())) {
-                    try {
-                        alarmDao.removeKeyword(parameters, buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, keyword.getHostName()), i);
-                        //TODO 삭제 성공 확인 하기
-                    } catch (IOException e) {
-                        e.printStackTrace();
+            Type type = new TypeToken<ArrayList<KeywordModel>>(){}.getType();
+            if (x.getSourceAsMap().get("keywords") != null) {
+                ArrayList<KeywordModel> arrayList = gson.fromJson(x.getSourceAsMap().get("keywords").toString(), type);
+                Map<String, Object> parameters = new HashMap<>();
+                for (int i = 0; i < arrayList.size(); i++) {
+                    if (arrayList.get(i).getKeyword().equals(keyword.getKeyword())) {
+                        try {
+                            alarmDao.removeKeyword(parameters, buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, keyword.getHostName()), i);
+                            //TODO 삭제 성공 확인 하기
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         });
@@ -163,6 +164,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     //TODO 시간복잡도 를 줄이려면 어떻게 해야..?
     //TODO last_occurrence_time 을 추가해보는 것도 좋은데 mapping 이나 여러 고려사항이 있을거 같다.
+    //FIXME 알람이 한번 울린 키워드 가 등록될시 알람이 울린다.
     @Override
     public void detectKeyword() throws IOException {
         log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");

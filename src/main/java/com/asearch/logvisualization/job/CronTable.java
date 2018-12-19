@@ -23,7 +23,7 @@ public class CronTable {
      */
     // 애플리케이션 시작 후 60초 후에 첫 실행, 그 후 매 60초마다 주기적으로 실행한다.
 //    @Scheduled(initialDelay = 60000, fixedDelay = 60000)
-    @Scheduled(cron = "*/10 * * * * *")
+//    @Scheduled(cron = "*/10 * * * * *")
     public void job() throws IOException {
         alarmService.detectKeyword();
     }
