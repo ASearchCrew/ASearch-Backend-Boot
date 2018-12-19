@@ -1,10 +1,11 @@
 package com.asearch.logvisualization.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Data;
 
 @Data
 public class LogCountBySecondsModel {
-	private long logCount;
-	private String startTime;
-	private String endTime;
+	private List<LogCountByMinutesModel> charDatas = new ArrayList<LogCountByMinutesModel>();
 }
