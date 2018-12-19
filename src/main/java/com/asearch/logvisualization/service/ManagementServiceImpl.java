@@ -1,12 +1,27 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dao.ManagementDao;
-import com.asearch.logvisualization.dto.RegisterServerModel;
-import com.asearch.logvisualization.dto.ServerListDto;
-import com.asearch.logvisualization.exception.AlreadyExistsException;
-import com.asearch.logvisualization.exception.InternalServerErrorException;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.asearch.logvisualization.util.Constant.ERROR_LOGIC_DATA;
+import static com.asearch.logvisualization.util.Constant.IS_DATA;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_INDEX;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_TYPE;
+import static com.asearch.logvisualization.util.Constant.NO_DATA;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -18,34 +33,12 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import static com.asearch.logvisualization.util.Constant.*;
-
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.stereotype.Service;
-
+import com.asearch.logvisualization.dao.ManagementDao;
 import com.asearch.logvisualization.dto.LogCountByMinutesModel;
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
+import com.asearch.logvisualization.exception.InternalServerErrorException;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +56,7 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
     
     @Override
     public void modifyFilebeatConf(String path) throws Exception{
-    	Socket socket = new Socket("192.168.157.128", 9001);
+    	Socket socket = new Socket("52.79.220.131", 9001);
     	
     	OutputStream stream = socket.getOutputStream();
 		stream.write(path.getBytes());
@@ -335,42 +328,94 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
 	}
 
 	@Override
-	public LogCountBySecondsModel getLogCountBySeconds() throws IOException {
-		Date date = new Date();
-		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+	public LogCountBySecondsModel getLogCountBySeconds(String endTime2) throws IOException {
 		LogCountBySecondsModel logCountBySecondsModel = new LogCountBySecondsModel();
-		List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
+		
+		if(endTime2 == null) {
+			Date date = new Date();
+			SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+			
+			List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
 
-		Instant instant = Instant.now();
-		ZoneId zoneId = ZoneId.of("UTC");
-		ZonedDateTime nowTime = ZonedDateTime.ofInstant(instant, zoneId);
-		String endString = nowTime.toString().split(":")[0]+":"+nowTime.toString().split(":")[1]+":00.000Z";
-		ZonedDateTime endTime = ZonedDateTime.parse(endString);
+			Instant instant = Instant.now();
+			ZoneId zoneId = ZoneId.of("UTC");
+			ZonedDateTime nowTime = ZonedDateTime.ofInstant(instant, zoneId);
+			String endString = nowTime.toString().split(":")[0]+":"+nowTime.toString().split(":")[1]+":00.000Z";
+			ZonedDateTime endTime = ZonedDateTime.parse(endString);
+			//endTime = endTime.minusMinutes(1);
+			
+			int minusMinute = 1;
 
-		int minusMinute = 1;
+			ZonedDateTime startTime;
+			for(int i = 0; i < 60; i++) {
+				startTime = endTime.minusMinutes(minusMinute);
 
-		ZonedDateTime startTime;
-		for(int i = 1; i < 61; i++) {
-			startTime = endTime.minusMinutes(minusMinute);
+				LogCountByMinutesModel logCountByMinutesModel = new LogCountByMinutesModel();
+				logCountByMinutesModel.setStartTime(startTime.toString());
+				logCountByMinutesModel.setEndTime(endTime.toString());
 
-			LogCountByMinutesModel logCountByMinutesModel = new LogCountByMinutesModel();
-			logCountByMinutesModel.setStartTime(startTime.toString());
-			logCountByMinutesModel.setEndTime(endTime.toString());
+				for(int j = 0; j < nowIndexList.size(); j++) {
+					String index = nowIndexList.get(j);
 
-			for(int j = 0; j < nowIndexList.size(); j++) {
-				String index = nowIndexList.get(j);
+					SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+					searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
+					SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
 
-				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-				searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
-				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+					SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+					logCountByMinutesModel.setLogCount(logCountByMinutesModel.getLogCount()+response.getHits().getTotalHits());
+				}
 
-				logCountByMinutesModel.setLogCount(logCountByMinutesModel.getLogCount()+response.getHits().getTotalHits());
+				endTime = startTime;
+				logCountBySecondsModel.getCharDatas().add(logCountByMinutesModel);
 			}
+		}else {
+			Date date = new Date();
+			SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+			
+			List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
 
-			endTime = startTime;
-			logCountBySecondsModel.getCharDatas().add(logCountByMinutesModel);
+			Instant instant = Instant.now();
+			ZoneId zoneId = ZoneId.of("UTC");
+			ZonedDateTime nowTime = ZonedDateTime.ofInstant(instant, zoneId);
+			ZonedDateTime startTime = ZonedDateTime.parse(endTime2);
+			ZonedDateTime endTime = startTime;
+			
+			int nowHour = Integer.parseInt(nowTime.toString().split(":")[0].split("T")[1]);
+			int nowMinute = Integer.parseInt(nowTime.toString().split(":")[1]);
+			
+			while(true) {
+				startTime = endTime;
+				
+				int endHour = Integer.parseInt(startTime.plusMinutes(1).toString().split(":")[0].split("T")[1]);
+				int endMinute = Integer.parseInt(startTime.plusMinutes(1).toString().split(":")[1].split("Z")[0]);
+				
+				if(nowHour <= endHour) {
+					if(nowMinute <= endMinute) {
+						break;
+					}
+				}
+				
+				endTime = startTime.plusMinutes(1);
+				
+				LogCountByMinutesModel logCountByMinutesModel = new LogCountByMinutesModel();
+				logCountByMinutesModel.setStartTime(startTime.toString());
+				logCountByMinutesModel.setEndTime(endTime.toString());
+
+				for(int j = 0; j < nowIndexList.size(); j++) {
+					String index = nowIndexList.get(j);
+
+					SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+					searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").gte(startTime.toString().split("Z")[0]+"Z").lte(endTime.toString().split("Z")[0]+"Z"));
+					SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+
+					SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+
+					logCountByMinutesModel.setLogCount(logCountByMinutesModel.getLogCount()+response.getHits().getTotalHits());
+				}
+
+				logCountBySecondsModel.getCharDatas().add(logCountByMinutesModel);
+			}
 		}
 
 		return logCountBySecondsModel;
