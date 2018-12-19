@@ -1,6 +1,7 @@
 package com.asearch.logvisualization.controller;
 
 
+import com.asearch.logvisualization.dto.DeleteServerModel;
 import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.dto.ServerListDto;
 import java.io.IOException;
@@ -57,10 +58,22 @@ public class ManagementController {
             @ApiResponse(code = 409, message = "Already Exist")
     })
     @CrossOrigin
-    @PostMapping("/server") // monitoring/server
+    @PostMapping("/server")
     public ResponseEntity registerServerToMonitor(@RequestBody RegisterServerModel serverInfo) throws IOException {
         log.info(serverInfo.toString());
         managementService.registerServerToMonitor(serverInfo);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+    @ApiOperation(value = "모니터링 할 서버 삭제", notes = "모니터링 할 서버를 삭제한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 409, message = "Already Exist")
+    })
+    @CrossOrigin
+    @DeleteMapping("/server")
+    public ResponseEntity deleteServerToMonitor(@RequestBody DeleteServerModel serverInfo) throws IOException {
+        log.info(serverInfo.toString());
+        managementService.deleteServerToMonitor(serverInfo);
         return new ResponseEntity(HttpStatus.OK);
     }
     
@@ -109,18 +122,6 @@ public class ManagementController {
     @GetMapping("/keywordcount")
     public ResponseEntity<List<HashMap<String, Object>>> getKeywordCountList(@RequestParam(value = "hostName", required = true) String hostName) throws Exception{
         return new ResponseEntity<List<HashMap<String, Object>>>(managementService.getKeywordCountList(hostName), HttpStatus.OK);
-    }
-    
-    @ApiOperation(value = "모니터링 할 서버 삭제", notes = "모니터링 할 서버를 삭제한다.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "Not Found")
-    })
-    @CrossOrigin
-    @DeleteMapping("/deleteserver") //
-    public ResponseEntity deleteServerToMonitor(@RequestParam(value = "hostIp", required = true) String hostIp) throws IOException {
-    	managementService.deleteServerToMonitor(hostIp);
-        return new ResponseEntity(HttpStatus.OK);
     }
     
     @ApiOperation(value = "초별 로그갯수 조회", notes = "초별 로그갯수 조회.")

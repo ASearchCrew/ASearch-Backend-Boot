@@ -1,5 +1,6 @@
 package com.asearch.logvisualization.service;
 
+import com.asearch.logvisualization.dto.DeleteServerModel;
 import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.dto.ServerListDto;
 
@@ -32,7 +33,7 @@ public interface ManagementService {
 	List<HashMap<String, Object>> getKeywordCountList(String hostName) throws IOException;
 
 
-	void deleteServerToMonitor(String hostIp)  throws IOException;
+	void deleteServerToMonitor(DeleteServerModel serverInfo)  throws IOException;
 	
 
 	LogCountBySecondsModel getLogCountBySeconds() throws IOException;

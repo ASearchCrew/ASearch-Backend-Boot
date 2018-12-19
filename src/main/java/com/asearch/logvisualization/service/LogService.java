@@ -1,6 +1,7 @@
 package com.asearch.logvisualization.service;
 
 import com.asearch.logvisualization.dto.LogInfoDto;
+import com.asearch.logvisualization.dto.PushTokenDto;
 import io.micrometer.core.lang.Nullable;
 
 import java.io.IOException;
@@ -21,4 +22,6 @@ public interface LogService {
 
 
     String getDocument(String id) throws IOException;
+
+    void registerPushToken(PushTokenDto dto) throws IOException;
 }

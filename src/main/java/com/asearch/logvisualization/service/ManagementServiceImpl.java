@@ -1,8 +1,7 @@
 package com.asearch.logvisualization.service;
 
 import com.asearch.logvisualization.dao.ManagementDao;
-import com.asearch.logvisualization.dto.RegisterServerModel;
-import com.asearch.logvisualization.dto.ServerListDto;
+import com.asearch.logvisualization.dto.*;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
 import com.asearch.logvisualization.exception.InternalServerErrorException;
 import lombok.AllArgsConstructor;
@@ -31,24 +30,7 @@ import static com.asearch.logvisualization.util.Constant.*;
 
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.stereotype.Service;
 
-import com.asearch.logvisualization.dto.LogCountByMinutesModel;
-import com.asearch.logvisualization.dto.LogCountBySecondsModel;
-import com.asearch.logvisualization.exception.AlreadyExistsException;
-
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
 @Service
@@ -63,7 +45,7 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
     
     @Override
     public void modifyFilebeatConf(String path) throws Exception{
-    	Socket socket = new Socket("192.168.157.128", 9001);
+    	Socket socket = new Socket("52.79.220.131", 9001);
     	
     	OutputStream stream = socket.getOutputStream();
 		stream.write(path.getBytes());
@@ -313,25 +295,10 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
 	}
 
 	@Override
-	public void deleteServerToMonitor(String hostIp) throws IOException {
-		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-		searchSourceBuilder.query(QueryBuilders.matchQuery("host_ip", hostIp));
-		SearchRequest searchRequest = new SearchRequest("server").types("doc").source(searchSourceBuilder);
+	public void deleteServerToMonitor(DeleteServerModel deleteServerModel) throws IOException {
 
-		SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-
-		response.getHits().forEach(item -> {
-			DeleteRequest deleteRequest = new DeleteRequest("server", "doc", item.getId());
-			try {
-				DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-
-		//DeleteRequest deleteRequest = new DeleteRequest("server", "doc", hostIp);
-		//DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
-
+		DeleteRequest deleteRequest = buildDeleteRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, deleteServerModel.getHostName());
+		DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
 	}
 
 	@Override

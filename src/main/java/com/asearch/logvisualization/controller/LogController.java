@@ -2,6 +2,7 @@ package com.asearch.logvisualization.controller;
 
 import com.asearch.logvisualization.dto.LogInfoDto;
 import com.asearch.logvisualization.dto.LogModel;
+import com.asearch.logvisualization.dto.PushTokenDto;
 import com.asearch.logvisualization.service.LogService;
 import io.micrometer.core.lang.Nullable;
 import io.swagger.annotations.Api;
@@ -77,6 +78,17 @@ public class LogController {
     @GetMapping("/{documentId}")
     public ResponseEntity<String> searchLog(@PathVariable(value = "documentId") String id) throws IOException {
         return new ResponseEntity<>(logService.getDocument(id), HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "User Push Token 등록", notes = "User Push Token 을 등록한다.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+    })
+    @CrossOrigin
+    @PostMapping("/admin/token")
+    public ResponseEntity registerUserToken(@RequestBody PushTokenDto dto) throws IOException {
+        logService.registerPushToken(dto);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
 }

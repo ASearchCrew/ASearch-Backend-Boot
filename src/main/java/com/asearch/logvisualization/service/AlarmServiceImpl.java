@@ -165,7 +165,8 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
     //TODO last_occurrence_time 을 추가해보는 것도 좋은데 mapping 이나 여러 고려사항이 있을거 같다.
     @Override
     public void detectKeyword() throws IOException {
-
+        log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+        log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
         SearchHit[] searchHits = alarmDao.getKeywordList(
                 buildSearchRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, null),
                 buildSearchSourceRequest(), "all", 1000);
@@ -188,7 +189,8 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                     int keywordPosition = 0;
                     for(KeywordModel keyword : keywords) {
                         log.info("keyword :: {}", keyword.getKeyword());
-                        SearchRequest searchRequest = buildSearchRequest("filebeat*", null, null);
+//                        SearchRequest searchRequest = buildSearchRequest("filebeat*", null, null);
+                        SearchRequest searchRequest = buildSearchRequest(server.getId()+"*", null, null);
                         String[] includeFields = new String[] {"@timestamp", "message"};
                         String[] excludeFields = new String[] {};
                         SearchSourceBuilder searchSourceBuilder = buildSearchSourceRequest();
@@ -211,26 +213,56 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                 Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
                                 List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
-                                    log.info("22222222");
-                                    //TODO Push Service
+                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
+                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
+                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
+                                    //TODO Push Service -- Topic 으로 바꾸자.
                                     //TODO Get Token
-                                    JSONObject body = new JSONObject();
-                                    body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
-                                    body.put("priority", "high");
-                                    JSONObject notification = new JSONObject();
-                                    notification.put("title", "발생 로그 = ");
-                                    notification.put("body", keyword.getKeyword());
-                                    JSONObject data = new JSONObject();
-                                    data.put("Key-1", "JSA Data 1");
-                                    data.put("Key-2", "JSA Data 2");
+                                    SearchRequest searchRequestToken = buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null);
+                                    SearchSourceBuilder searchSourceBuilderToken = buildSearchSourceRequest();
+                                    searchSourceBuilderToken.query(QueryBuilders.matchAllQuery());
+                                    searchRequestToken.source(searchSourceBuilderToken);
+                                    SearchResponse searchResponse = client.search(searchRequestToken, RequestOptions.DEFAULT);
 
-                                    body.put("notification", notification);
-                                    body.put("data", data);
+                                    searchResponse.getHits().forEach(item -> {
+//                                        item.getSourceAsMap().get("token").toString();
+                                        JSONObject body = new JSONObject();
+                                        body.put("to", item.getSourceAsMap().get("token").toString());
+                                        body.put("priority", "high");
+                                        JSONObject notification = new JSONObject();
+                                        notification.put("title", "Log = ");
+                                        notification.put("body", keyword.getKeyword());
+                                        JSONObject data = new JSONObject();
+                                        data.put("Key-1", "JSA Data 1");
+                                        data.put("Key-2", "JSA Data 2");
 
-                                    HttpEntity<String> request = new HttpEntity<>(body.toString());
+                                        body.put("notification", notification);
+                                        body.put("data", data);
 
-                                    CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
-                                    CompletableFuture.allOf(pushNotification).join();
+                                        HttpEntity<String> request = new HttpEntity<>(body.toString());
+
+                                        CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+                                        CompletableFuture.allOf(pushNotification).join();
+                                    });
+
+
+//                                    JSONObject body = new JSONObject();
+//                                    body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
+//                                    body.put("priority", "high");
+//                                    JSONObject notification = new JSONObject();
+//                                    notification.put("title", "Log = ");
+//                                    notification.put("body", keyword.getKeyword());
+//                                    JSONObject data = new JSONObject();
+//                                    data.put("Key-1", "JSA Data 1");
+//                                    data.put("Key-2", "JSA Data 2");
+//
+//                                    body.put("notification", notification);
+//                                    body.put("data", data);
+//
+//                                    HttpEntity<String> request = new HttpEntity<>(body.toString());
+//
+//                                    CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+//                                    CompletableFuture.allOf(pushNotification).join();
 
                                     //TODO last_occurrence_time 등록.
                                     Calendar calendar = Calendar.getInstance();
@@ -248,7 +280,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                     parameters.put("keyword", myObject);
                                     //TODO script 로 lastOccurrenceTime == null 조건문을 줄일 수 있다. 리팩토링 해야 한다.
                                     String idOrCode = "ctx._source.keywords["+keywordPosition+"] = params.keyword";
-                                    log.info(idOrCode);
+//                                    log.info(idOrCode);
 
                                     Script inline = new Script(ScriptType.INLINE, "painless",
                                             idOrCode, parameters);
@@ -278,26 +310,55 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                         //@timestamp > last_occurrence_time
                                         log.info("COME IN");
                                         if (diff > Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
-                                            log.info("AAA");
+                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
+                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
+                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                             //TODO Push Service
                                             //TODO Get Token
-                                            JSONObject body = new JSONObject();
-                                            body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
-                                            body.put("priority", "high");
-                                            JSONObject notification = new JSONObject();
-                                            notification.put("title", "발생 토큰 = ");
-                                            notification.put("body", keyword.getKeyword());
-                                            JSONObject data = new JSONObject();
-                                            data.put("Key-1", "JSA Data 1");
-                                            data.put("Key-2", "JSA Data 2");
+                                            SearchRequest searchRequestToken = buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null);
+                                            SearchSourceBuilder searchSourceBuilderToken = buildSearchSourceRequest();
+                                            searchSourceBuilderToken.query(QueryBuilders.matchAllQuery());
+                                            searchRequestToken.source(searchSourceBuilderToken);
+                                            SearchResponse searchResponse = client.search(searchRequestToken, RequestOptions.DEFAULT);
 
-                                            body.put("notification", notification);
-                                            body.put("data", data);
+                                            searchResponse.getHits().forEach(item -> {
+//                                        item.getSourceAsMap().get("token").toString();
+                                                JSONObject body = new JSONObject();
+                                                body.put("to", item.getSourceAsMap().get("token").toString());
+                                                body.put("priority", "high");
+                                                JSONObject notification = new JSONObject();
+                                                notification.put("title", "Log = ");
+                                                notification.put("body", keyword.getKeyword());
+                                                JSONObject data = new JSONObject();
+                                                data.put("Key-1", "JSA Data 1");
+                                                data.put("Key-2", "JSA Data 2");
 
-                                            HttpEntity<String> request = new HttpEntity<>(body.toString());
+                                                body.put("notification", notification);
+                                                body.put("data", data);
 
-                                            CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
-                                            CompletableFuture.allOf(pushNotification).join();
+                                                HttpEntity<String> request = new HttpEntity<>(body.toString());
+
+                                                CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+                                                CompletableFuture.allOf(pushNotification).join();
+                                            });
+
+//                                            JSONObject body = new JSONObject();
+//                                            body.put("to", "dSyujRt4psg:APA91bGZvmTH7sZ1Hz40EsAgndSedbZMxaPBdZlmE0C3ryPnVCe_WpHjr5F8N5d1UnRxpKu7gyh5_qYGHO0eX_Apqbmmld7xIfMjjhkcF3-fX-kWyMqolyHNUmgAsrJRT4T9Z0dV4omH");
+//                                            body.put("priority", "high");
+//                                            JSONObject notification = new JSONObject();
+//                                            notification.put("title", "Log = ");
+//                                            notification.put("body", keyword.getKeyword());
+//                                            JSONObject data = new JSONObject();
+//                                            data.put("Key-1", "JSA Data 1");
+//                                            data.put("Key-2", "JSA Data 2");
+//
+//                                            body.put("notification", notification);
+//                                            body.put("data", data);
+//
+//                                            HttpEntity<String> request = new HttpEntity<>(body.toString());
+//
+//                                            CompletableFuture<String> pushNotification = webPushNotificationsService.send(request);
+//                                            CompletableFuture.allOf(pushNotification).join();
 
                                             //TODO last_occurrence_time 업데이트.
                                             Calendar calendar1 = Calendar.getInstance();
