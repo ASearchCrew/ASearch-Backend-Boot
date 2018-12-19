@@ -1,13 +1,11 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dto.RegisterServerModel;
-import com.asearch.logvisualization.dto.ServerListDto;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 
 public interface ManagementService {
 

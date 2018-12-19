@@ -1,7 +1,8 @@
 package com.asearch.logvisualization.dao;
 
-import com.asearch.logvisualization.service.BaseServiceImpl;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.util.Map;
+
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -9,7 +10,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -22,11 +22,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.springframework.stereotype.Repository;
 
-import java.io.IOException;
-import java.util.Map;
-
-import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_INDEX;
-import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_TYPE;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository

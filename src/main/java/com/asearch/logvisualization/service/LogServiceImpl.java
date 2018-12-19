@@ -1,23 +1,25 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dao.LogDao;
-import com.asearch.logvisualization.dto.LogInfoDto;
-import com.asearch.logvisualization.dto.LogModel;
-import io.micrometer.core.lang.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.search.SearchHit;
-
-import org.springframework.stereotype.Service;
+import static com.asearch.logvisualization.util.Constant.FILEBEAT_INDEX;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
-import static com.asearch.logvisualization.util.Constant.FILEBEAT_INDEX;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.SearchHit;
+import org.springframework.stereotype.Service;
+
+import com.asearch.logvisualization.dao.LogDao;
+import com.asearch.logvisualization.dto.LogInfoDto;
+import com.asearch.logvisualization.dto.LogModel;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 //        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544502133329").to(String.valueOf(calendar.getTimeInMillis())));
 //        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from("1544501113329").to("1544502133329"));

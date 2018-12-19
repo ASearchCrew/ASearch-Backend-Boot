@@ -1,12 +1,27 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dao.ManagementDao;
-import com.asearch.logvisualization.dto.RegisterServerModel;
-import com.asearch.logvisualization.dto.ServerListDto;
-import com.asearch.logvisualization.exception.AlreadyExistsException;
-import com.asearch.logvisualization.exception.InternalServerErrorException;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.asearch.logvisualization.util.Constant.ERROR_LOGIC_DATA;
+import static com.asearch.logvisualization.util.Constant.IS_DATA;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_INDEX;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_TYPE;
+import static com.asearch.logvisualization.util.Constant.NO_DATA;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -18,34 +33,12 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import static com.asearch.logvisualization.util.Constant.*;
-
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.stereotype.Service;
-
+import com.asearch.logvisualization.dao.ManagementDao;
 import com.asearch.logvisualization.dto.LogCountByMinutesModel;
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.exception.AlreadyExistsException;
+import com.asearch.logvisualization.exception.InternalServerErrorException;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

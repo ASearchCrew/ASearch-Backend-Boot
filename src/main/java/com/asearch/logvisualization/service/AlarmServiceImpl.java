@@ -1,16 +1,24 @@
 package com.asearch.logvisualization.service;
 
-import com.asearch.logvisualization.dao.AlarmDaoImpl;
-import com.asearch.logvisualization.dto.*;
-import com.asearch.logvisualization.exception.AlreadyExistsException;
-import com.asearch.logvisualization.exception.InternalServerErrorException;
-import com.asearch.logvisualization.exception.NotFoundException;
-import com.asearch.logvisualization.exception.SuccessRes;
-import com.asearch.logvisualization.push.WebPushNotificationService;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_INDEX;
+import static com.asearch.logvisualization.util.Constant.MANAGEMENT_SERVER_TYPE;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
+
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -29,16 +37,22 @@ import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import com.asearch.logvisualization.dao.AlarmDaoImpl;
+import com.asearch.logvisualization.dto.AlarmKeywordDto;
+import com.asearch.logvisualization.dto.KeywordDto;
+import com.asearch.logvisualization.dto.KeywordListModel;
+import com.asearch.logvisualization.dto.KeywordModel;
+import com.asearch.logvisualization.dto.OccurrenceTimeDto;
+import com.asearch.logvisualization.exception.AlreadyExistsException;
+import com.asearch.logvisualization.exception.InternalServerErrorException;
+import com.asearch.logvisualization.exception.NotFoundException;
+import com.asearch.logvisualization.exception.SuccessRes;
+import com.asearch.logvisualization.push.WebPushNotificationService;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
-import static com.asearch.logvisualization.util.Constant.*;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
 @Service

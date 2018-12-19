@@ -1,8 +1,6 @@
 package com.asearch.logvisualization.controller;
 
 
-import com.asearch.logvisualization.dto.RegisterServerModel;
-import com.asearch.logvisualization.dto.ServerListDto;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.asearch.logvisualization.dto.LogCountBySecondsModel;
+import com.asearch.logvisualization.dto.RegisterServerModel;
 import com.asearch.logvisualization.service.ManagementService;
 
 import io.swagger.annotations.Api;
