@@ -29,7 +29,7 @@ public class IndexCacheJob {
 	private RestHighLevelClient client;
 	private IndexCacheService indexCacheService;
 	
-	@Scheduled(fixedDelay=3000000)
+//	@Scheduled(fixedDelay=3000000)
 	public void aJob() throws IOException {		
 		GetIndexRequest request = new GetIndexRequest().indices("_all"); 
     	request.includeDefaults(true); 
@@ -50,13 +50,21 @@ public class IndexCacheJob {
     		
     		for(int j = 0; j < getIndexResponse.getIndices().length; j++) {
         		String index = getIndexResponse.getIndices()[j].toString();
-        		
+
+
+
         		if(index.contains("filebeat")) {
         			if(index.contains(simpleDateFormat.format(calendar.getTime()).toString())) {
         				//List<String> indexList = indexs.get(simpleDateFormat.format(calendar.getTime()).toString());
         				indexList.add(index);
         			}
         		}
+//        		else if (index.contains("bootwas")) {
+//					if(index.contains(simpleDateFormat.format(calendar.getTime()).toString())) {
+//						//List<String> indexList = indexs.get(simpleDateFormat.format(calendar.getTime()).toString());
+//						indexList.add(index);
+//					}
+//				}
         	}
     		indexs.put(simpleDateFormat.format(calendar.getTime()).toString(), indexList);
     	}

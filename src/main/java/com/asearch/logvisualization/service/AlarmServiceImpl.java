@@ -49,6 +49,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     @Override
     public void registerAlarmKeyword(AlarmKeywordDto keywordInfo) throws IOException {
+
         Map<String, Object> parameters = new HashMap<>();
         Map<String, Object> document = Optional.ofNullable(alarmDao.getExistedKeywords(buildGetRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, keywordInfo.getHostName()),
                 "keywords", keywordInfo.getKeyword()).getSourceAsMap())
@@ -70,25 +71,13 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                         parameters.clear();
                     }
                     assert updateResponse != null;
-                    if (updateResponse.status() != RestStatus.OK) {
-                        log.info("우영 실패");
+                    if (updateResponse.status() != RestStatus.OK)
                         throw new InternalServerErrorException("DB Malfunction");
-                    }
-                    else {
-                        log.info("우영 성공");
+                    else
                         return 3;
-                    }
-//                    else throw new AlreadyExistsException("Success");//FIXME 이쪽에서 종료되게 해야하는데 어떻게 할지.?
-//                    else return "";
                 });
-        if (String.valueOf(3).equals(res.toString())) {
-            log.info("우영 성공2");
+        if (String.valueOf(3).equals(res.toString()))
             return;
-        }
-        log.info("우영 성공3");
-        log.info(res.toString());
-        log.info(document.get("keywords").toString());
-//        if(res.getClass().toString().equals("String")) return;
 
         Gson gson = new Gson();
         Type type = new TypeToken<ArrayList<KeywordDto>>() {}.getType();
@@ -102,7 +91,6 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         parameters.put("keyword", myObject);
         UpdateResponse updateResponse = alarmDao.addKeyword(parameters, buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, keywordInfo.getHostName()));
         if (updateResponse.status() != RestStatus.OK) throw new InternalServerErrorException("DB Malfunction");
-
     }
 
     @Override
@@ -217,9 +205,9 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                 Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
                                 List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
                                 // 이 키워드를 처음만들면 발생시간이 없어서 null 이 된다.
+
+                                    log.info("발생시간" + occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
-                                    log.info(keyword.getKeyword());
-                                    log.info(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
@@ -335,9 +323,10 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                                 body.put("priority", "high");
                                                 JSONObject notification = new JSONObject();
                                                 notification.put("title", "Log = ");
-                                                notification.put("body", keyword.getKeyword());
+                                                log.info("푸시 보내기 전 키워드 확인" + keyword.getKeyword());
+                                                notification.put("body", keyword.getKeyword()); // FIXME push 에서 ??? 가 뜬다.
                                                 JSONObject data = new JSONObject();
-                                                data.put("Key-1", "JSA Data 1");
+                                                data.put("Key-1", keyword.getKeyword());
                                                 data.put("Key-2", "JSA Data 2");
 
                                                 body.put("notification", notification);
