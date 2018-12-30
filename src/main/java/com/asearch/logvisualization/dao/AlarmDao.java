@@ -42,5 +42,18 @@ public interface AlarmDao {
     UpdateResponse addKeyword(Map<String, Object> parameters, UpdateRequest updateRequest) throws IOException;
 
 
+
     UpdateResponse removeKeyword(Map<String, Object> parameters, UpdateRequest buildUpdateRequest, int position) throws IOException;
+
+
+
+    SearchResponse findByMessageLog(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder, String keyword) throws IOException;
+
+
+
+    UpdateResponse updateKeyword(UpdateRequest updateRequest, Map<String, Object> parameters, int keywordPosition) throws IOException;
+
+
+
+    SearchResponse getTokenList(SearchRequest searchRequest, SearchSourceBuilder searchSourceBuilder) throws IOException;
 }

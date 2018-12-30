@@ -9,6 +9,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 과장님은 클라이언트에서 for 문을 돌려서 백엔드의 eventTable(MariaDB) 만을 바라보게 해놓았다. *************
+ */
 @Service
 public class WebPushNotificationService {
 
