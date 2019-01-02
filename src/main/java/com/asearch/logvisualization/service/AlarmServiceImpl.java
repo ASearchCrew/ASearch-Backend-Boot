@@ -154,7 +154,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 buildSearchRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, null),
                 buildSearchSourceRequest(), "all", 1000);
 
-        log.info("===============1스케쥴 시작=======================");
+        log.info("==================Start=======================");
         Gson gson = new Gson();
         Type type = new TypeToken<ArrayList<KeywordModel>>(){}.getType();
         Calendar calendar = Calendar.getInstance();
@@ -176,65 +176,51 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                     server.getId()+"*", null, null),
                                     buildSearchSourceRequest(),
                                     keyword.getKeyword());
-                            /** =================여기 까지 Request 끝=====================*/
 
                             if (response.getHits().getTotalHits() != 0) {
                                 Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
                                 List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
-                                // 이 키워드를 처음만들면 발생시간이 없어서 null 이 된다.
-                                    log.info("발생시간" + occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
-                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                    //FIX : Remove Push, Get Token Logic
-                                    //TODO last_occurrence_time 등록.
+                                    //Todo Duplicate Code
                                     date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
                                     calendar.setTime(date);
-                                    calendar.getTimeInMillis();
                                     UpdateResponse updateResponse = alarmDao.updateKeyword(
                                             buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId()),
                                             makeParameters(keyword.getKeyword(), String.valueOf(calendar.getTimeInMillis())),
                                             keywordPosition);
                                     //TODO Update 성공확인 할 것
                                 } else {
-                                    log.info("3333333333");
                                     log.info(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
-
                                     date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
                                     calendar.setTime(date);
-                                    calendar.getTimeInMillis();
 
                                     // @timestamp - lastOccurrenceTime
                                     long diff = calendar.getTimeInMillis()
                                             - Long.parseLong(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                     log.info(String.valueOf(calendar.getTimeInMillis()));
-                                    log.info(String.valueOf(diff));
-
 
                                     if (calendar.getTimeInMillis() > Long.parseLong(occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime())) {
                                         //@timestamp > last_occurrence_time
-                                        log.info("COME IN");
                                         if (diff > Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
-                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                            //TODO Push Service -- Topic 으로 바꾸자.
-                                            //TODO Get Token
+                                            //Get Token
                                             SearchResponse searchResponse = alarmDao.getTokenList(
                                                     buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null),
                                                     buildSearchSourceRequest());
-
-                                            //Fixme Topic
+                                            //Push Service -- Topic 으로 바꾸자.
                                             searchResponse.getHits().forEach(item -> sendPushNoti(item.getSourceAsMap().get("token").toString(), keyword.getKeyword()));
-
-                                            //TODO last_occurrence_time 업데이트.
                                             date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
                                             calendar.setTime(date);
-                                            calendar.getTimeInMillis();
                                             UpdateResponse updateResponse = alarmDao.updateKeyword(
                                                     buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId()),
                                                     makeParameters(keyword.getKeyword(), String.valueOf(calendar.getTimeInMillis())),
                                                     keywordPosition);
                                         } else if (diff < Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
-                                            // 그냥 넘어 간다.
+                                            date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
+                                            calendar.setTime(date);
+                                            UpdateResponse updateResponse = alarmDao.updateKeyword(
+                                                    buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId()),
+                                                    makeParameters(keyword.getKeyword(), String.valueOf(calendar.getTimeInMillis())),
+                                                    keywordPosition);
                                         } else {
                                             //TODO Exception
                                         }
@@ -252,7 +238,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 }
             }
         });
-        log.info("==============================1스케쥴 끝==================================");
+        log.info("==============================Finish==================================");
     }
 
 
@@ -262,7 +248,6 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
         myObject.put("keyword", keyword);
         myObject.put("lastOccurrenceTime", lastOccurrenceTime);
         parameters.put("keyword", myObject);
-
         return parameters;
     }
 
