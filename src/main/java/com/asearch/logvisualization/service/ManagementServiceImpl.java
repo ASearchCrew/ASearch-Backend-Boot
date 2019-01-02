@@ -78,83 +78,84 @@ public class ManagementServiceImpl extends BaseServiceImpl implements Management
 
 	@Override
 	public List<HashMap<String, Object>> getLogCountList() throws Exception{
-		Date date = new Date();
-		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
-		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-		List<Object> serverList = getServerList();
-
-		List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
-
-		for(int i = 0; i < serverList.size(); i++) {
-			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
-			HashMap<String, Object> putData = new HashMap<String, Object>();
-
-			for(int j = 0; j < nowIndexList.size(); j++) {
-				String index = nowIndexList.get(j);
-
-				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-				searchSourceBuilder.size(1);
-				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
-				searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-
-				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
-
-				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
-
-				if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
-					Object lastTime = putData.get("lastTime");
-
-					if(lastTime == null) {
-						putData.put("timeStamp", "Exception");
-						putData.put("lastTime", 9999);
-						putData.put("hostIp", convert.get("hostIp"));
-						putData.put("hostName", convert.get("hostName"));
-					}
-
-					result.add(putData);
-				}else {
-					Object lastTime = putData.get("lastTime");
-
-					response.getHits().forEach(item -> {
-						ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
-
-						String timezone = utcDateTime.toString();
-						String logTime = item.getSourceAsMap().get("@timestamp").toString();
-						int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
-						int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
-						int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
-						int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
-						int resultHour = nowHour - logHour;
-
-						if(nowMinute - logMinute < 0) {
-							if(resultHour > 0) {
-								resultHour -= 1;
-							}
-						}
-						//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
-
-						if(lastTime != null) {
-							if((int)lastTime >= resultHour) {
-								putData.put("timeStamp", logTime);
-								putData.put("lastTime", resultHour);
-								putData.put("hostIp", convert.get("hostIp"));
-								putData.put("hostName", convert.get("hostName"));
-							}
-						}else {
-							putData.put("timeStamp", logTime);
-							putData.put("lastTime", resultHour);
-							putData.put("hostIp", convert.get("hostIp"));
-							putData.put("hostName", convert.get("hostName"));
-						}
-
-						result.add(putData);
-					});
-				}
-			}
-
-		}
-
-		return result;
+//		Date date = new Date();
+//		SimpleDateFormat  simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd");
+//		List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+//		List<Object> serverList = getServerList();
+//
+//		List<String> nowIndexList = indexCacheService.getIndexList().get(simpleDateFormat.format(date).toString());
+//
+//		for(int i = 0; i < serverList.size(); i++) {
+//			HashMap<String, Object> convert = (HashMap<String, Object>)serverList.get(i);
+//			HashMap<String, Object> putData = new HashMap<String, Object>();
+//
+//			for(int j = 0; j < nowIndexList.size(); j++) {
+//				String index = nowIndexList.get(j);
+//
+//				SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+//				searchSourceBuilder.size(1);
+//				searchSourceBuilder.query(QueryBuilders.matchQuery("beat.name", convert.get("hostName")));
+//				searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
+//
+//				SearchRequest searchRequest = new SearchRequest(index).types("doc").source(searchSourceBuilder);
+//
+//				SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
+//
+//				if(response.getHits().getTotalHits() == 0) { //12시정도 애매한 상황일 경우를 대비해서 이전날 로그까지 조회하는 예외처리가 필요.
+//					Object lastTime = putData.get("lastTime");
+//
+//					if(lastTime == null) {
+//						putData.put("timeStamp", "Exception");
+//						putData.put("lastTime", 9999);
+//						putData.put("hostIp", convert.get("hostIp"));
+//						putData.put("hostName", convert.get("hostName"));
+//					}
+//
+//					result.add(putData);
+//				}else {
+//					Object lastTime = putData.get("lastTime");
+//
+//					response.getHits().forEach(item -> {
+//						ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneId.of("UTC"));
+//
+//						String timezone = utcDateTime.toString();
+//						String logTime = item.getSourceAsMap().get("@timestamp").toString();
+//						int nowHour = Integer.parseInt(timezone.split("T")[1].split(":")[0]);
+//						int nowMinute = Integer.parseInt(timezone.split("T")[1].split(":")[1]);
+//						int logHour = Integer.parseInt(logTime.split("T")[1].split(":")[0]);
+//						int logMinute = Integer.parseInt(logTime.split("T")[1].split(":")[1]);
+//						int resultHour = nowHour - logHour;
+//
+//						if(nowMinute - logMinute < 0) {
+//							if(resultHour > 0) {
+//								resultHour -= 1;
+//							}
+//						}
+//						//String beatName = item.getSourceAsMap().get("beat").toString().split(",")[0].split("=")[1];
+//
+//						if(lastTime != null) {
+//							if((int)lastTime >= resultHour) {
+//								putData.put("timeStamp", logTime);
+//								putData.put("lastTime", resultHour);
+//								putData.put("hostIp", convert.get("hostIp"));
+//								putData.put("hostName", convert.get("hostName"));
+//							}
+//						}else {
+//							putData.put("timeStamp", logTime);
+//							putData.put("lastTime", resultHour);
+//							putData.put("hostIp", convert.get("hostIp"));
+//							putData.put("hostName", convert.get("hostName"));
+//						}
+//
+//						result.add(putData);
+//					});
+//				}
+//			}
+//
+//		}
+//
+//		return result;
+		return null;
 	}
 
 	@Override

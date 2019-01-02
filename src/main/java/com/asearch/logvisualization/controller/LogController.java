@@ -64,7 +64,6 @@ public class LogController {
                                                    @Nullable @RequestParam("id") String id,
                                                    @Nullable @RequestParam("calendarStartTime") String calendarStartTime,
                                                    @Nullable @RequestParam("calendarEndTime") String calendarEndTime) throws Exception {
-        log.info(calendarEndTime + " End Time");
         log.info("=======================================IN===================================================");
         return new ResponseEntity<>(logService.getRawLogs(direction, hostName, time,
                 search, isStream, initialCount, upScrollOffset, id, calendarStartTime, calendarEndTime), HttpStatus.OK);
