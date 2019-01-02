@@ -10,20 +10,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
@@ -159,8 +150,6 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
      */
     @Override
     public void detectKeyword() throws IOException {
-        log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        log.info("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
         SearchHit[] searchHits = alarmDao.getKeywordList(
                 buildSearchRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, null),
                 buildSearchSourceRequest(), "all", 1000);
@@ -182,34 +171,25 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                 if (keywords.size() > 0) { // keywords 배열
                     int keywordPosition = 0;
                     for (KeywordModel keyword : keywords) {
-
                         try {
                             SearchResponse response = alarmDao.findByMessageLog(buildSearchRequest(
                                     server.getId()+"*", null, null),
                                     buildSearchSourceRequest(),
                                     keyword.getKeyword());
-                            log.info(response.getHits().getTotalHits() + " ~~");
                             /** =================여기 까지 Request 끝=====================*/
 
                             if (response.getHits().getTotalHits() != 0) {
                                 Type timeType = new TypeToken<ArrayList<OccurrenceTimeDto>>(){}.getType();
                                 List<OccurrenceTimeDto> occurrenceTimeList = gson.fromJson(server.getSourceAsMap().get("keywords").toString(), timeType);
                                 // 이 키워드를 처음만들면 발생시간이 없어서 null 이 된다.
-
                                     log.info("발생시간" + occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime());
                                 if (occurrenceTimeList.get(keywordPosition).getLastOccurrenceTime() == null) {
                                     log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                    log.info("@@@@@@@@@@@@@@@ 첫 First Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                    //TODO Push Service -- Topic 으로 바꾸자.
-                                    //TODO Get Token
                                     //FIX : Remove Push, Get Token Logic
                                     //TODO last_occurrence_time 등록.
                                     date = dateFormat.parse(response.getHits().getHits()[0].getSourceAsMap().get("@timestamp").toString());
                                     calendar.setTime(date);
                                     calendar.getTimeInMillis();
-//                                    log.info(calendar.getTimeInMillis() + " ~"); // 잘됨.
-
                                     UpdateResponse updateResponse = alarmDao.updateKeyword(
                                             buildUpdateRequest(MANAGEMENT_SERVER_INDEX, MANAGEMENT_SERVER_TYPE, server.getId()),
                                             makeParameters(keyword.getKeyword(), String.valueOf(calendar.getTimeInMillis())),
@@ -236,8 +216,7 @@ public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
                                         if (diff > Long.parseLong(server.getSourceAsMap().get("interval").toString())) {
                                             log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
                                             log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                            log.info("@@@@@@@@@@@@@@@ 두번 이상 Push 발송 @@@@@@@@@@@@@@@@@@@@@@");
-                                            //TODO Push Service
+                                            //TODO Push Service -- Topic 으로 바꾸자.
                                             //TODO Get Token
                                             SearchResponse searchResponse = alarmDao.getTokenList(
                                                     buildSearchRequest(TOKEN_SERVER_INDEX, TOKEN_SERVER_TYPE, null),
