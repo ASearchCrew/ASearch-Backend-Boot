@@ -47,46 +47,8 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
         //TODO searchTime 이 null 일 경우에 뭐가 들어오는지 check 하기.
         if (calendarEndTime != null) {
             if (search != null) {
-                searchSourceBuilder.query(QueryBuilders.matchQuery("message", search));
+//                searchSourceBuilder.query(QueryBuilders.matchQuery("message", search));
                 switch (direction) {
-//                    case "up" :
-//                        //TODO 1. 갯수가 500000개가 넘어갈시에는, 짤라서 계산해야 한다. 변수가 한개 필요 -- 500000개 미만일시 그냥 계산하기.
-//                        /**
-//                         * initialCount 는 : 0 <-- 이 안나오기 위해서 center Request 를 받았을 떄부터, localStarage 에 저장 해놓아야 한다.
-//                         */
-//                        log.info("up - search : {}", search);
-//                        log.info("이전 마지막 time = {}" , Long.parseLong(time));
-//                        log.info("id = {}", id);
-//                        searchSourceBuilder.query(
-//                                QueryBuilders.boolQuery()
-//                                        .must(QueryBuilders.termQuery("message", search))
-//                                        .filter(QueryBuilders.rangeQuery("@timestamp")
-//                                                .from(String.valueOf(Long.parseLong(time) - 1000000000)) // 시간 Issue 해결 해야 한다.
-//                                                .to(String.valueOf(Long.parseLong(time)))));
-//                        Object[] objects = new Object[]{time, id};
-//                        searchSourceBuilder.searchAfter(objects);
-//                        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-//                        searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
-//                        //TODO 검색어가 있을 경우는 시간이 [현재시간-1000초(16분)] 보다 적은 데이터를 못보여주게 된다. -- EX 컴퓨터 개고수  -- 그러므로 시간을 걸면 안될듯?
-////                        searchSourceBuilder.from(Integer.parseInt(String.valueOf(fromCount))); // --> offset --//FIXME 시간 없이 쓰면 too large 에러 난다.
-//                        searchSourceBuilder.size(100);
-//                        break;
-//                    case "down" :
-//                        log.info("down - search : {}", search);
-//                        log.info("이전 최신 time = {}" , Long.parseLong(time));
-//                        log.info("id = {}",id);
-//                        searchSourceBuilder.query(
-//                                QueryBuilders.boolQuery()
-//                                        .must(QueryBuilders.termQuery("message", search))
-//                                        .filter(QueryBuilders.rangeQuery("@timestamp")
-//                                                .from(String.valueOf(Long.parseLong(time)))
-//                                                .to(calendar.getTimeInMillis())));
-//                        Object[] objectsa = new Object[]{time, id};
-//                        searchSourceBuilder.searchAfter(objectsa);
-//                        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
-//                        searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.ASC));
-//                        searchSourceBuilder.size(100);
-//                        break;
                     case "center" :
                         log.info("center 달력 - search : {}", search);
                         log.info("현재시간 = {} ", calendar.getTimeInMillis());
@@ -107,32 +69,6 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
             } else {
                 searchSourceBuilder.query(QueryBuilders.matchAllQuery());
                 switch (direction) {
-//                    case "up":
-//                        log.info("검색어 없는 Up STREAM (위로 Scroll) 구역");
-//                        log.info("이전 마지막 time = {}" , Long.parseLong(time));
-//                        log.info("id = {}",id);
-//                        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp")
-//                                .from(String.valueOf(Long.parseLong(time) - 100000)) //TODO 검색어가 없으면, 로그가 근방에 있으므로 마이너르슬 조금만 헀고,, 검색어가 있으면 로그가 근방이 아닌 멀리에 있을수도 있으므로 마이너스를 많이 했다.
-//                                .to(String.valueOf(Long.parseLong(time)))); //100초
-//                        Object[] objects = new Object[]{time, id};
-//                        searchSourceBuilder.searchAfter(objects);
-//                        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-//                        searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
-//                        searchSourceBuilder.size(100);
-//                        break;
-//                    case "down":
-//                        log.info("검색어 없는 Down STREAM (아래로 STREAM) 구역");
-//                        log.info("이전 최신 time = {}" , Long.parseLong(time));
-//                        log.info("id = {}",id);
-//                        searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp")
-//                                .from(String.valueOf(Long.parseLong(time)))
-//                                .to(calendar.getTimeInMillis()));
-//                        Object[] objectsa = new Object[]{time, id};
-//                        searchSourceBuilder.searchAfter(objectsa);
-//                        searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.ASC));
-//                        searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.ASC));
-//                        searchSourceBuilder.size(100);
-//                        break;
                     case "center":
                         log.info("검색어 없는 Center 달력 구역");
                         log.info("현재시간 = {} ", calendar.getTimeInMillis());
@@ -153,7 +89,7 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
              */
             if (isStream) {
                 if (search != null) {
-                    searchSourceBuilder.query(QueryBuilders.matchQuery("message", search));
+//                    searchSourceBuilder.query(QueryBuilders.matchQuery("message", search));
                     switch (direction) {
                         case "up" :
                             //TODO 1. 갯수가 500000개가 넘어갈시에는, 짤라서 계산해야 한다. 변수가 한개 필요 -- 500000개 미만일시 그냥 계산하기.
@@ -399,42 +335,3 @@ public class LogDaoImpl extends BaseDaoImpl implements LogDao {
         return client.search(searchRequest, RequestOptions.DEFAULT);
     }
 }
-
-
-//            if (direction.equals("up")) {
-//                log.info("up - 라이브스트림 : {}", search);
-//                log.info("이전 마지막 time = {}" , Long.parseLong(time));
-//                log.info("id = {}", id);
-//                searchSourceBuilder.query(
-//                        QueryBuilders.boolQuery()
-//                                .must(QueryBuilders.matchAllQuery())
-//                                .filter(QueryBuilders.rangeQuery("@timestamp")
-//                                        .from(String.valueOf(Long.parseLong(time) - 1000000000))
-//                                        .to(String.valueOf(Long.parseLong(time)))));
-//                Object[] objects = new Object[]{time, id};
-//                searchSourceBuilder.searchAfter(objects);
-//                searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-//                searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
-//                searchSourceBuilder.size(200);
-//            } else {
-//                /**
-//                 * 1. LiveStream 버튼
-//                 * 데이터가 적을떄,는 붙이지만, 많을때는 짜른다.
-//                 */
-//                log.info("라이브스트림 이지만 Down 에 속한다.");
-//                log.info("이전 마지막 time = {}" , Long.parseLong(time));
-//                log.info("id = {}", id);
-////                searchSourceBuilder.query(
-////                        QueryBuilders.boolQuery()
-////                                .must(QueryBuilders.matchAllQuery())
-////                                .filter(QueryBuilders.rangeQuery("@timestamp")
-////                                        .from(time)
-////                                        .to(calendar.getTimeInMillis())));
-//                searchSourceBuilder.query(QueryBuilders.rangeQuery("@timestamp").from(String.valueOf(time)).to(calendar.getTimeInMillis()));
-//                searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-//                Object[] objects = new Object[]{time,id};
-//                searchSourceBuilder.searchAfter(objects);
-//                searchSourceBuilder.sort(new FieldSortBuilder("@timestamp").order(SortOrder.DESC));
-//                searchSourceBuilder.sort(new FieldSortBuilder("_id").order(SortOrder.DESC));
-//                searchSourceBuilder.size(200);
-//            }

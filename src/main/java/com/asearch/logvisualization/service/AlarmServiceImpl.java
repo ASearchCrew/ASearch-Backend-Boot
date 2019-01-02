@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.json.JSONObject;
@@ -35,7 +34,6 @@ import static com.asearch.logvisualization.util.Constant.*;
 public class AlarmServiceImpl extends BaseServiceImpl implements AlarmService {
 
     private AlarmDaoImpl alarmDao;
-    private RestHighLevelClient client;
     private WebPushNotificationService webPushNotificationsService;
 
     @Override

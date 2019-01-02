@@ -55,7 +55,8 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
                                  String id,
                                  String calendarStartTime,
                                  String calendarEndTime) throws IOException, ParseException {
-        //TODO searchTime 추가하기.
+
+        //TODO Refactoring
         /**
          *  Dao 에 DataAccess 를 요청한다.
          */
@@ -111,7 +112,6 @@ public class LogServiceImpl extends BaseServiceImpl implements LogService {
         }
         infoDto.setLogs(logList);
         log.info("===================================한개의 Request 끝==========================================");
-        log.info("");
         return infoDto;
     }
 
